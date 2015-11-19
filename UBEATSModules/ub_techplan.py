@@ -431,7 +431,7 @@ class UB_Techplan(Module):
             #SELECT EVALUATION METRICS
             self.createParameter("scoringmatrix_path", STRING,"")
             self.createParameter("scoringmatrix_default", BOOL,"")
-            self.scoringmatrix_path = self.ubeatsdir+"/ancillary/mcadefault.csv"
+            self.scoringmatrix_path = ""
             self.scoringmatrix_default = 0
 
             #CUSTOMIZE EVALUATION CRITERIA
@@ -512,11 +512,11 @@ class UB_Techplan(Module):
 
             #SWH Harvesting algorithms
             self.createParameter("rainfile", STRING, "")    #Rainfall file for SWH
-            self.rainfile = self.ubeatsdir+"/ancillary/MelbourneRain1998-2007-6min.csv"
+            self.rainfile = ""
             self.createParameter("rain_dt", DOUBLE, "")
             self.rain_dt = 6        #[mins]
             self.createParameter("evapfile", STRING, "")
-            self.evapfile = self.ubeatsdir+"/ancillary/MelbourneEvap1998-2007-Day.csv"
+            self.evapfile = ""
             self.createParameter("evap_dt", DOUBLE, "")
             self.evap_dt = 1440     #[mins]
             self.lot_raintanksizes = [1,2,3,4,5,7.5,10,15,20]       #[kL]
@@ -548,6 +548,27 @@ class UB_Techplan(Module):
             self.penaltyRec = 1
             self.penaltyFa = 2.0
             self.penaltyFb = 1.2
+
+
+            self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S", 
+                    "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k", 
+                    "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU", 
+                    "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
+                    "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
+                    "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
+                    "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", 
+                    "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
+                    "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
+                    "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
+                    "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", "LIjobs", 
+                    "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
+                    "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", 
+                    "LIAeTIA", "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
+                    "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
+                    "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
+                    "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
+                    "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
+                    "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr"]
 
       def init(self):
 
@@ -680,9 +701,30 @@ class UB_Techplan(Module):
 
 
       def run(self):
-            print "Running techplan"
+            #-------------------------------------------------------------------------------------------------------
+            #Retrieve data to work with - NOTE THIS NEEDS TO BE REPLACED WITH WHATEVER DAnCE wants to implement
+            self.regiondata.reset_reading()
             
+            for r in self.regiondata:
+                  mapdata = r
 
+            numblocks = mapdata.GetFieldAsInteger("NumBlocks")
+
+            blockDict = {}
+
+            self.blockdata.reset_reading()
+            for block in self.blockdata:
+                  curID = block.GetFieldAsInteger("BlockID")
+                  print curID
+                  blockDict[curID] = {}
+                  for key in self.attnames:
+                        blockDict[curID][key] = block.GetFieldAsDouble(key)
+            #End Result is a dictionary of dictionaries. Each key in the outer dictionary represents a BlocKID, each 
+            #key in the inner dictionary represents the attributes of that block
+            #---------------------------------------------------------------------------------------------------------
+
+
+            
 
 
 
