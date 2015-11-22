@@ -703,6 +703,9 @@ class UB_Techplan(Module):
 
 
       def run(self):
+            ###-------------------------------------------------------------------###
+            #--- DYNAMIND PRE-PROCESSING
+            ###-------------------------------------------------------------------###
             #-------------------------------------------------------------------------------------------------------
             #Retrieve data to work with - NOTE THIS NEEDS TO BE REPLACED WITH WHATEVER DAnCE wants to implement
             self.regiondata.reset_reading()
@@ -723,8 +726,22 @@ class UB_Techplan(Module):
             #key in the inner dictionary represents the attributes of that block
             #---------------------------------------------------------------------------------------------------------
 
+
+            ################################################################################
+            ## UrbanBEATS WSUD Planning Module CODE STRUCTURE
+            ## ----------------------------------------------
+            ##    - Section ! - Pre-processing
+            ##    - Section A - Recalculate Impervious Area to Service
+            ##    - Seciton B - Retrofit Algorithm
+            ##    - Section C - Opportunities Mapping of Individual Techs
+            ##          > C.1 - In-block Options
+            ##          > C.2 - Multi-block Options
+            ##          > C.3 - Initial MCA Filtering
+            ################################################################################
+            
+
             ###-------------------------------------------------------------------###
-            #--- PRE-PROCESSING
+            #--- SECTION ! - Pre-Processing
             ###-------------------------------------------------------------------###        
 
             #CALCULATE SOME GLOBAL VARIABLES RELATING TO TARGETS
@@ -789,6 +806,67 @@ class UB_Techplan(Module):
                         self.priorities[i] = self.priorities[i]/prioritiessum               #1, 2 and priorities 3,2,1 --> [3/5, 2/5, 0]
             print self.priorities
             print "Now planning technologies"
+
+
+            ###-------------------------------------------------------------------###
+            #---  SECTION A - RECALCULATE IMP AREA TO SERVE              ---#
+            ###-------------------------------------------------------------------###
+            #DETERMINE IMPERVIOUS AREAS TO MANAGE BASED ON LAND USES
+            for i in range(int(blocks_num)):
+                  currentID = i+1
+                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentID))
+                  if currentAttList.getAttribute("Status") == 0:
+                        continue
+                  block_EIA = currentAttList.getAttribute("Blk_EIA")
+                  
+                  if self.service_res == False:
+                        AimpRes = currentAttList.getAttribute("ResLotEIA") * currentAttList.getAttribute("ResAllots")
+                        AimpstRes = currentAttList.getAttribute("ResFrontT") - currentAttList.getAttribute("avSt_RES")
+                        block_EIA -= AimpRes - AimpstRes
+                  if self.service_hdr == False:
+                        block_EIA -= currentAttList.getAttribute("HDR_EIA")
+                  if self.service_com == False:
+                        block_EIA -= currentAttList.getAttribute("COMAeEIA")
+                  if self.service_li == False:
+                        block_EIA -= currentAttList.getAttribute("LIAeEIA")
+                  if self.service_hi == False:
+                        block_EIA -= currentAttList.getAttribute("HIAeEIA")
+
+                  currentAttList.addAttribute("Manage_EIA", block_EIA)
+
+            ###-------------------------------------------------------------------###
+            #---  SECTION B - RETROFIT ALGORITHM
+            ###-------------------------------------------------------------------###
+
+            #COMING LATER
+
+
+            ###-------------------------------------------------------------------###
+            #--- SECTION C - OPPORTUNITIES MAPPING OF INDIVIDUAL TECHS
+            ###-------------------------------------------------------------------###
+
+            inblock_options = {}
+            subbas_options = {}
+
+                  #---- C.1 - IN-BLOCK OPTIONS --------------------------------------
+
+            #Initialize increment variables
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
       ######################################
@@ -911,6 +989,7 @@ class UB_Techplan(Module):
             mca_ecn = self.rescaleMCAscorelists(mca_ecn)
             mca_soc = self.rescaleMCAscorelists(mca_soc)
             return mca_techlist, mca_tech, mca_env, mca_ecn, mca_soc
+
 
       def identifyMCAmetriccount(self, metriclist):
             """A function to read the MCA file and identify how many technical, environmental
