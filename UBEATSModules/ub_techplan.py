@@ -26,6 +26,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from pydynamind import *
 
+#URBANBEATS IMPORTS
+import tech_templates as tt
+import tech_design as td
+import tech_designbydcv as dcv          #sub-functions that design based on design curves
+import tech_designbyeq as deq           #sub-functions that design based on design equations
+import tech_designbysim as dsim         #sub-functions that design based on miniature simulations
+import ubseriesread as ubseries         #sub-functions responsible for processing climate data
+
+#Path to the ancillary folder external files that UrbanBEATS uses to undertake the WSUD assessment
+#Includes: Design curves, rainfall data, stormwater harvesting benefits empirical relationships
+ANCILLARY_PATH = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"   #Change this path to suit
+
+
 class UB_Techplan(Module):
 
       def __init__(self):
@@ -46,9 +59,9 @@ class UB_Techplan(Module):
             self.createParameter("runoff_pri", DOUBLE,"")
             self.createParameter("pollute_pri", DOUBLE,"")
             self.createParameter("harvest_pri",DOUBLE,"")
-            self.ration_runoff = 0                #Design for flood mitigation?
-            self.ration_pollute = 1               #Design for pollution management?
-            self.ration_harvest = 0              #Design for harvesting & reuse? Adds storage-sizing to certain systems
+            self.ration_runoff = 0                     #Design for runoff volume reduction
+            self.ration_pollute = 1                    #Design for pollution management
+            self.ration_harvest = 0                    #Design for harvesting & reuse? Adds storage-sizing to certain systems
             self.runoff_pri = 0.0                      #Priority of flood mitigation?
             self.pollute_pri = 1.0                     #Priority of pollution management?
             self.harvest_pri = 0.0                     #Priority for harvesting & reuse
@@ -61,10 +74,10 @@ class UB_Techplan(Module):
             self.createParameter("targets_TP", DOUBLE,"")
             self.createParameter("targets_TN", DOUBLE,"")
             self.createParameter("targets_reliability", DOUBLE, "")
-            self.targets_runoff = 80.0            #Runoff reduction target [%]
-            self.targets_TSS = 70.0               #TSS Load reduction target [%]
-            self.targets_TP = 30.0                #TP Load reduction target [%]
-            self.targets_TN = 30.0                #TN Load reduction target [%]
+            self.targets_runoff = 30.0            #Runoff reduction target [%]
+            self.targets_TSS = 80.0               #TSS Load reduction target [%]
+            self.targets_TP = 45.0                #TP Load reduction target [%]
+            self.targets_TN = 45.0                #TN Load reduction target [%]
             self.targets_reliability = 80.0       #required reliability of harvesting systems
 
             self.system_tarQ = 0            #INITIALIZE THESE VARIABLES
@@ -72,7 +85,7 @@ class UB_Techplan(Module):
             self.system_tarTP = 0
             self.system_tarTN = 0
             self.system_tarREL = 0
-            self.targetsvector = []         #---CALCULATED IN THE FIRST LINE OF RUN()
+            self.targetsvector = []         #---CALCULATED IN THE FIRST SECTION OF RUN()
 
             #WATER MANAGEMENT SERVICE LEVELS
             self.createParameter("service_swmQty", DOUBLE, "")
@@ -104,25 +117,14 @@ class UB_Techplan(Module):
             self.createParameter("street_rigour", DOUBLE, "")
             self.createParameter("neigh_rigour", DOUBLE, "")
             self.createParameter("subbas_rigour", DOUBLE, "")
-            self.strategy_lot_check = 1
-            self.strategy_street_check = 1
-            self.strategy_neigh_check = 1
-            self.strategy_subbas_check = 1
-            self.lot_rigour = 4.0
-            self.street_rigour = 4.0
-            self.neigh_rigour = 4.0
-            self.subbas_rigour = 4.0
-
-            #ADDITIONAL STRATEGIES
-            self.createParameter("scalepref", DOUBLE,"")
-            self.scalepref = 3  #Ranges from 1 (high priority on at-source) to 5 (high priority on end-of-pipe)
-
-            self.scalingprefmatrix = [{"L":0.40, "S":0.30, "N":0.20, "B":0.10},
-                                  {"L":0.25, "S":0.35, "N":0.25, "B":0.15},
-                                  {"L":0.25, "S":0.25, "N":0.25, "B":0.25},
-                                  {"L":0.15, "S":0.25, "N":0.35, "B":0.25},
-                                  {"L":0.10, "S":0.20, "N":0.30, "B":0.40},]
-            self.curscalepref = {"L":0.25, "S":0.25, "N":0.25, "B":0.25}
+            self.strategy_lot_check = 1         #Plan technologies at Lot scale?
+            self.strategy_street_check = 1      #Plan technologies at Street scale?
+            self.strategy_neigh_check = 1       #Plan technologies at Neighbourhood scale?
+            self.strategy_subbas_check = 1      #Plan technologies at Sub-basin scale?
+            self.lot_rigour = 4.0               #How many increments at lot scale? (4 = 0, 0.25, 0.5, 0.75, 1.0) 
+            self.street_rigour = 4.0            #How many increments at street scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
+            self.neigh_rigour = 4.0             #How many increments at neighbourhood scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
+            self.subbas_rigour = 4.0            #How many increments at sub-basin scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
 
             #REGIONAL RECYCLING-SUPPLY ZONES
             self.createParameter("rec_demrange_min", DOUBLE, "")
@@ -432,7 +434,7 @@ class UB_Techplan(Module):
             self.createParameter("scoringmatrix_path", STRING,"")
             self.createParameter("scoringmatrix_default", BOOL,"")
             self.scoringmatrix_path = ""
-            self.scoringmatrix_default = 0
+            self.scoringmatrix_default = 1
 
             #CUSTOMIZE EVALUATION CRITERIA
             self.createParameter("bottomlines_tech", BOOL,"")
@@ -708,8 +710,6 @@ class UB_Techplan(Module):
             for r in self.regiondata:
                   mapdata = r
 
-            numblocks = mapdata.GetFieldAsInteger("NumBlocks")
-
             blockDict = {}
 
             self.blockdata.reset_reading()
@@ -723,8 +723,270 @@ class UB_Techplan(Module):
             #key in the inner dictionary represents the attributes of that block
             #---------------------------------------------------------------------------------------------------------
 
+            ###-------------------------------------------------------------------###
+            #--- PRE-PROCESSING
+            ###-------------------------------------------------------------------###        
 
+            #CALCULATE SOME GLOBAL VARIABLES RELATING TO TARGETS
+            self.system_tarQ = self.ration_runoff * self.targets_runoff     #Runoff reduction target
+            self.system_tarTSS = self.ration_pollute * self.targets_TSS     #TSS reduction target
+            self.system_tarTP = self.ration_pollute * self.targets_TP       #TP reduction target
+            self.system_tarTN = self.ration_pollute * self.targets_TN       #TN reduction target
+            self.system_tarREL = self.ration_harvest * self.targets_reliability     #Reliability  of recycling
+
+            self.targetsvector = [self.system_tarQ, self.system_tarTSS, self.system_tarTP, self.system_tarTN, self.system_tarREL]
+            print self.targetsvector      #-> targetsvector TO BE USED TO ASSESS OPPORTUNITIES
             
+            self.servicevector = [self.service_swmQty, self.service_swmWQ, self.service_rec]
+            print self.servicevector
+            
+            #CALCULATE SYSTEM DEPTHS
+            self.sysdepths = {"RT": self.RT_maxdepth - self.RT_mindead, "WSUR": self.WSURspec_EDD, "PB": self.PBspec_MD}
+
+            #SET DESIGN CURVES DIRECTORY - ALL CURVES NEED TO BE LOCATED IN THIS DIRECTORY
+            #To be done later.
+
+            #GET NECESSARY GLOBAL DATA TO DO ANALYSIS
+            blocks_num = mapdata.GetFieldAsInteger("NumBlocks")     #number of blocks to loop through
+            self.block_size = mapdata.GetFieldAsDouble("BlockSize")    #size of block
+            basins = mapdata.GetFieldAsInteger("TotalBasins")
+            
+            #CREATE TECHNOLOGIES SHORTLIST - THIS IS THE USER'S CUSTOMISED SHORTLIST
+            userTechList = self.compileUserTechList()               #holds the active technologies selected by user for simulation
+            print userTechList
+
+            #CREATE TECHNOLOGY LISTS FOR DIFFERENT SCALES
+            techListLot = self.fillScaleTechList("lot", userTechList)
+            techListStreet = self.fillScaleTechList("street", userTechList)
+            techListNeigh = self.fillScaleTechList("neigh", userTechList)
+            techListSubbas = self.fillScaleTechList("subbas", userTechList)
+            print "Lot"+str(techListLot)
+            print "Street"+str(techListStreet)
+            print "Neighbourhood"+str(techListNeigh)
+            print "Sub-basin"+str(techListSubbas)
+
+            #INITIALIZE STORMWATER HARVESTING BENEFITS DATA
+            if self.swh_benefits:
+                  self.swhbenefitstable = dcv.initializeSWHbenefitsTable(ANCILLARY_PATH)
+
+            #PROCESS MCA PARAMETERS AND SCORING DETAILS
+            self.mca_techlist, self.mca_tech, self.mca_env, self.mca_ecn, self.mca_soc = self.retrieveMCAscoringmatrix()
+            print self.mca_techlist
+            print self.mca_tech
+            print self.mca_env
+            print self.mca_ecn
+            print self.mca_soc
+
+            #Calculate MCA weightings for different PURPOSES - used to penalize MCA score if tech does not meet particular purpose
+            self.priorities = [int(self.ration_runoff)*float(self.runoff_pri), 
+                           int(self.ration_pollute)*float(self.pollute_pri),
+                           int(self.ration_harvest)*float(self.harvest_pri)]
+            prioritiessum = sum(self.priorities)
+            for i in range(len(self.priorities)):       #e.g. ALL and priorities 3,2,1 --> [3/6, 2/6, 1/6]
+                  if prioritiessum == 0:
+                        self.priorities[i] = 1
+                  else:
+                        self.priorities[i] = self.priorities[i]/prioritiessum               #1, 2 and priorities 3,2,1 --> [3/5, 2/5, 0]
+            print self.priorities
+            print "Now planning technologies"
 
 
+      ######################################
+      #--- FUNCTIONS FOR PRE-PROCESSING ---#
+      ######################################
+      def compileUserTechList(self):
+            """Compiles a dictionary of the technologies the user should use and at
+            what scales these different technologies should be used. Results are 
+            presented as a dictionary:
+            userTechList = { "TechAbbreviation" : [boolean, boolean, boolean, boolean], }
+                            each boolean corresponds to one of the four scales in the order
+                            lot, street, neighbourhood, sub-basin
+            """
+            userTechList = {}
+            for j in self.technames:
+                  if eval("self."+j+"status == 1"):
+                        userTechList[j] = [0,0,0,0]
+                        for k in range(len(self.scaleabbr)):
+                              k_scale = self.scaleabbr[k]
+                              try:
+                                    if eval("self."+str(j)+str(k_scale)+"==1"):
+                                          userTechList[j][k] = 1
+                              except NameError:
+                                    pass
+                              except AttributeError:
+                                    pass
+            return userTechList
+    
+
+      def fillScaleTechList(self, scale, userTechList):
+            """Returns a vector of tech abbreviations for a given scale of application
+            by scanning the userTechList dictionary. Used to fill out the relevant variables
+            that will be called when assessing opportunities
+            - Inputs: scale (the desired scale to work with, note that subbas and prec are interchangable)
+            userTechList (the created dictionary output from self.compileUserTechList()
+            """
+            techlist = []
+            if eval("self.strategy_"+scale+"_check == 1"):
+                  if scale == "subbas":
+                        scalelookup = "prec"
+                  else:
+                        scalelookup = scale
+                  scaleindex = self.scaleabbr.index(scalelookup)
+                  for key in userTechList.keys():
+                        if userTechList[key][scaleindex] == 1:
+                              techlist.append(key)
+                        else:
+                              pass
+                  return techlist
+            else:
+                  return techlist
+
+      ######################################
+      #--- MCA-RELATED SUB-FUNCTIONS    ---#
+      ######################################
+
+      def retrieveMCAscoringmatrix(self):
+            """Retrieves the Multi-Criteria Assessment Scoring Matrix from either the file
+            or the default UrbanBEATS values. Returns the vector data containing all scores.
+            """
+            mca_scoringmatrix, mca_tech, mca_env, mca_ecn, mca_soc = [], [], [] ,[] ,[]
+            if self.scoringmatrix_default:
+                  mca_fname = ANCILLARY_PATH+"/mcadefault.csv"  #uses UBEATS default matrix           
+            else:
+                  mca_fname = self.scoringmatrix_path #loads file
+
+            f = open(str(mca_fname), 'r')
+            for lines in f:
+                  readingline = lines.split(',')
+                  readingline[len(readingline)-1] = readingline[len(readingline)-1].rstrip()
+                  mca_scoringmatrix.append(readingline)
+            f.close()
+            total_metrics = len(mca_scoringmatrix[0])-1    #total number of metrics
+            total_tech = len(mca_scoringmatrix)-1          #for total number of technologies
+
+            #Grab index of technologies to relate to scores
+            mca_techlist = []
+            for i in range(len(mca_scoringmatrix)):
+                  if i == 0:
+                        continue        #Skip the header line
+                  mca_techlist.append(mca_scoringmatrix[i][0])
+
+            metrics = [self.bottomlines_tech_n, self.bottomlines_env_n, self.bottomlines_ecn_n, self.bottomlines_soc_n]
+            if total_metrics != sum(metrics):
+                  print "Warning, user-defined number of metrics does not match that of loaded file! Attempting to identify metrics!"
+                  metrics, positions = self.identifyMCAmetriccount(mca_scoringmatrix[0])
+            else:
+                  print "User-defined number of metrics matches that of loaded file!"
+                  metrics = [self.bottomlines_tech_n, self.bottomlines_env_n, self.bottomlines_ecn_n, self.bottomlines_soc_n, 0]
+                  techpos, envpos, ecnpos, socpos = [], [], [], []
+                  poscounter = 1
+                  for i in range(int(self.bottomlines_tech_n)):
+                        techpos.append(int(poscounter))
+                        poscounter += 1
+                  for i in range(int(self.bottomlines_env_n)):
+                        envpos.append(int(poscounter))
+                        poscounter += 1
+                  for i in range(int(self.bottomlines_ecn_n)):
+                        ecnpos.append(int(poscounter))
+                        poscounter += 1
+                  for i in range(int(self.bottomlines_soc_n)):
+                        socpos.append(int(poscounter))
+                        poscounter += 1
+                  positions = [techpos, envpos, ecnpos, socpos, []]
+
+            for lines in range(len(mca_scoringmatrix)):
+                  if lines == 0:
+                        continue
+                  mca_tech.append(self.filloutMCAscorearray(mca_scoringmatrix[lines], metrics[0], positions[0]))
+                  mca_env.append(self.filloutMCAscorearray(mca_scoringmatrix[lines], metrics[1], positions[1]))
+                  mca_ecn.append(self.filloutMCAscorearray(mca_scoringmatrix[lines], metrics[2], positions[2]))
+                  mca_soc.append(self.filloutMCAscorearray(mca_scoringmatrix[lines], metrics[3], positions[3]))
+
+            for i in ["tech", "env", "ecn", "soc"]:                     #Runs the check if the criteria was selected
+                  if eval("self.bottomlines_"+str(i)) == False:           #if not, creates a zero-length empty array
+                        exec("mca_"+str(i)+" = []")
+
+            mca_tech = self.rescaleMCAscorelists(mca_tech)
+            mca_env = self.rescaleMCAscorelists(mca_env)
+            mca_ecn = self.rescaleMCAscorelists(mca_ecn)
+            mca_soc = self.rescaleMCAscorelists(mca_soc)
+            return mca_techlist, mca_tech, mca_env, mca_ecn, mca_soc
+
+      def identifyMCAmetriccount(self, metriclist):
+            """A function to read the MCA file and identify how many technical, environmental
+            economics and social metrics have been entered into the list. Returns a vector of
+            the suggested correct metric count based on the four different criteria. Note that
+            identification of metrics can only be done if the user-defined file has entered
+            the criteria titles correctly, i.e. acceptable strings include
+            Technical Criteria: "Te#", "Tec#", "Tech#", "Technical#", "Technology#"
+            or "Technological#"
+            Environmental Criteria: "En#", "Env#", "Enviro#", Environ#", Environment#" or
+            "Environmental#"
+            Economics Criteria: "Ec#", "Ecn#", "Econ#", "Economic#", "Economics#" or
+            "Economical#"
+            Social Criteria: "So#", "Soc#", "Social#", "Society#", "Socio#", "Societal#" or
+            "People#" or "Person#"
+            These acceptable strings can either be 'first-letter capitalized', 'all uppsercase'
+            or 'all lowercase' format.
+            """
+            tec, env, ecn, soc, unid = 0,0,0,0,0
+            tecpos, envpos, ecnpos, socpos, unidpos = [], [], [], [], []
+
+            #List of acceptable strings
+            tecstrings = ["Te", "TE", "te", "Tec", "TEC", "tec", "Tech", "TECH", "tech",
+                  "Technical", "TECHNICAL", "technical", "Technology", "TECHNOLOGY",
+                  "technology", "Technological", "TECHNOLOGICAL", "technological"]
+            envstrings = ["En", "EN", "en", "Env", "ENV", "env", "Enviro", "ENVIRO", "enviro",
+                  "Environ", "ENVIRON", "environ", "Environment", "ENVIRONMENT",
+                  "environment", "Environmental", "ENVIRONMENTAL", "environmental"]
+            ecnstrings = ["Ec", "EC", "ec", "Ecn", "ECN", "ecn", "Econ", "ECON", "econ",
+                  "Economic", "ECONOMIC", "economic", "Economics", "ECONOMICS", 
+                  "economics", "Economical", "ECONOMICAL", "economical"]
+            socstrings = ["So", "SO", "so", "Soc", "SOC", "soc", "Social", "SOCIAL", "social",
+                  "Society", "SOCIETY", "society", "Socio", "SOCIO", "socio", "Societal",
+                  "SOCIETAL", "societal", "People", "PEOPLE", "people", "Person",
+                  "PERSON", "person"]
+
+            for i in range(len(metriclist)):
+                  if i == 0:
+                        continue
+                  if str(metriclist[i][0:len(metriclist[i])-1]) in tecstrings:
+                        tec += 1
+                        tecpos.append(i)
+                  elif str(metriclist[i][0:len(metriclist[i])-1]) in envstrings:
+                        env += 1
+                        envpos.append(i)
+                  elif str(metriclist[i][0:len(metriclist[i])-1]) in ecnstrings:
+                        ecn += 1
+                        ecnpos.append(i)
+                  elif str(metriclist[i][0:len(metriclist[i])-1]) in socstrings:
+                        soc += 1
+                        socpos.append(i)
+                  else:
+                        unid += 1
+                        unidpos.append(i)
+
+            criteriametrics = [tec, env, ecn, soc, unid]
+            criteriapos = [tecpos, envpos, ecnpos, socpos, unidpos]
+            return criteriametrics, criteriapos
+
+
+      def filloutMCAscorearray(self, line, techcount, techpos):
+            """Extracts scores for a particular criteria from a line in the loaded scoring matrix
+            and transfers them to the respective array, also converts the value to a float"""
+            line_index = []
+            for i in range(int(techcount)):
+                  line_index.append(float(line[techpos[i]]))
+            return line_index
+
+
+      def rescaleMCAscorelists(self, list):
+            """Rescales the MCA scores based on the number of metrics in each criteria. This gives
+            each criteria an equal weighting to start with and can then influence the evaluation
+            later on with user-defined final criteria weights.
+            """
+            for i in range(len(list)):
+                  for j in range(len(list[i])):
+                        list[i][j] = list[i][j]/len(list[i])
+            return list
 
