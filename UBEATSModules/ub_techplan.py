@@ -34,6 +34,10 @@ import tech_designbyeq as deq           #sub-functions that design based on desi
 import tech_designbysim as dsim         #sub-functions that design based on miniature simulations
 import ubseriesread as ubseries         #sub-functions responsible for processing climate data
 
+import os, gc, random
+import numpy as np
+
+
 #Path to the ancillary folder external files that UrbanBEATS uses to undertake the WSUD assessment
 #Includes: Design curves, rainfall data, stormwater harvesting benefits empirical relationships
 ANCILLARY_PATH = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"   #Change this path to suit
@@ -558,7 +562,7 @@ class UB_Techplan(Module):
                     "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
                     "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
                     "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
-                    "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", 
+                    "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT",
                     "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
                     "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
                     "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
@@ -575,13 +579,14 @@ class UB_Techplan(Module):
                     "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
                     "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
                     "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats", 
-                    "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys"
+                    "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys",
                     "HasL_HISys", "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
 
             self.blockDict = {}
             self.blockIDlist = []
             self.downIDlist = []
 
+            self.curscalepref = {"L":0.25, "S":0.25, "N":0.25, "B":0.25}
 
 
       def init(self):
@@ -638,6 +643,7 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("DemPublicI", DOUBLE, READ)
             self.blockdata.addAttribute("HasHouses", DOUBLE, READ)
             self.blockdata.addAttribute("HouseOccup", DOUBLE, READ)
+            self.blockdata.addAttribute("ResFrontT", DOUBLE, READ)
             self.blockdata.addAttribute("avSt_RES", DOUBLE, READ)
             self.blockdata.addAttribute("WResNstrip", DOUBLE, READ)
             self.blockdata.addAttribute("ResAllots", DOUBLE, READ)
@@ -1341,8 +1347,8 @@ class UB_Techplan(Module):
                   hasRESsystems = int(currentAttList["HasL_RESSys"])
                   if hasRESsystems == 0 and hasHouses != 0 and Aimplot > 0.0001 and j not in ["banned","list","of","tech"]:    #Do lot-scale house system
                         sys_objects = self.designTechnology(1.0, Aimplot, j, dcvpath, tech_applications, soilK, minsize, maxsize, lot_avail_sp, "RES", currentID, storeVols[0])
-                  for sys_object in sys_objects:
-                        tdRES.append(sys_object)
+                        for sys_object in sys_objects:
+                              tdRES.append(sys_object)
 
                   #HDR Systems
                   hasHDRsystems = int(currentAttList["HasL_HDRSys"])
@@ -1413,7 +1419,7 @@ class UB_Techplan(Module):
                   #print "Size of Tank: "+str(storeObj.getSize())
             else:
                   design_Dem = 0
-                  #print "Design Demand :"+str(design_Dem)
+            #print "Design Demand :"+str(design_Dem)
 
             #Get Soil K to use for theoretical system design
             if techabbr in ["BF", "SW", "IS", "WSUR", "PB"]:
@@ -1430,7 +1436,8 @@ class UB_Techplan(Module):
                   #print Asystem["Qty"]
             else:
                   Asystem["Qty"] = [None, 1]
-                  Asystem["Size"] = Asystem["Qty"]    #First target, set as default system size, even if zero
+            
+            Asystem["Size"] = Asystem["Qty"]    #First target, set as default system size, even if zero
 
             #OBJECTIVE 2 - Design for WQ Control
             if tech_applications[1] == 1:
@@ -1513,7 +1520,6 @@ class UB_Techplan(Module):
                         AsystemRecQty = td.sizeStoreArea_PB(vol, sysdepth, 0.0, 9999.0)
                         if AsystemRecQty[0] != None:
                               addstore.append([storeObj, AsystemRecWQ, AsystemRecQty, "PB", 0])
-
 
             if len(addstore) == 0:
                   return sys_objects_array
@@ -1778,7 +1784,6 @@ class UB_Techplan(Module):
             details.
             """
             blockID = int(currentAttList["BlockID"])
-            print "Test: Block ID", blockID
             streamIDs = []
             curID = blockID
             if direction == "upstream":
@@ -2150,7 +2155,7 @@ class UB_Techplan(Module):
             bas_subdemand = 0
             for i in supplytoblockIDs:
                   #block_attr = self.getBlockUUID(i, city)
-                  block_attr = self.activesim.getAssetWithName("BlockID"+str(i))
+                  block_attr = self.blockDict[int(i)]
                   bas_totdemand += self.getTotalWaterDemandEndUse(block_attr, ["K","S","T", "L", "I", "PI"])
                   bas_subdemand += self.getTotalWaterDemandEndUse(block_attr, enduses)
 
@@ -2235,30 +2240,30 @@ class UB_Techplan(Module):
                   - neigh_tech - list of neighbourhood scale technologies for block
             """
             allInBlockOptions = {}      #Initialize dictionary to hold all in-block options
-            currentID = int(currentAttList.getAttribute("BlockID"))
-            blockarea = pow(self.block_size,2)*currentAttList.getAttribute("Active")
+            currentID = int(currentAttList["BlockID"])
+            blockarea = pow(self.block_size, 2) * currentAttList["Active"]
 
             for i in range(len(self.subbas_incr)):                #e.g. for [0, 0.25, 0.5, 0.75, 1.0]
                   allInBlockOptions[self.subbas_incr[i]] = []       #Bins are: 0 to 25%, >25% to 50%, >50% to 75%, >75% to 100% of block treatment
 
             #Obtain all variables needed to do area balance for Impervious Area Service
-            allotments = currentAttList.getAttribute("ResAllots")
-            estatesLI = currentAttList.getAttribute("LIestates")
-            estatesHI = currentAttList.getAttribute("HIestates")
-            estatesCOM = currentAttList.getAttribute("COMestates")
-            Aimplot = currentAttList.getAttribute("ResLotEIA")
+            allotments = currentAttList["ResAllots"]
+            estatesLI = currentAttList["LIestates"]
+            estatesHI = currentAttList["HIestates"]
+            estatesCOM = currentAttList["COMestates"]
+            Aimplot = currentAttList["ResLotEIA"]
             AimpRes = allotments * Aimplot
-            AimpstRes = currentAttList.getAttribute("ResFrontT") - currentAttList.getAttribute("av_St_RES")
-            Aimphdr = currentAttList.getAttribute("HDR_EIA")    
-            AimpAeLI = currentAttList.getAttribute("LIAeEIA")
+            AimpstRes = currentAttList["ResFrontT"] - currentAttList["avSt_RES"]
+            Aimphdr = currentAttList["HDR_EIA"]    
+            AimpAeLI = currentAttList["LIAeEIA"]
             AimpLI = AimpAeLI * estatesLI
-            AimpAeHI = currentAttList.getAttribute("HIAeEIA")
+            AimpAeHI = currentAttList["HIAeEIA"]
             AimpHI = AimpAeHI * estatesHI
-            AimpAeCOM = currentAttList.getAttribute("COMAeEIA")
+            AimpAeCOM = currentAttList["COMAeEIA"]
             AimpCOM = AimpAeCOM * estatesCOM
 
-            AblockEIA = currentAttList.getAttribute("Manage_EIA")          #Total block imp area to manage
-            blockDem = currentAttList.getAttribute("Blk_WD") - currentAttList.getAttribute("wd_Nres_IN")
+            AblockEIA = currentAttList["Manage_EIA"]          #Total block imp area to manage
+            blockDem = currentAttList["Blk_WD"] - currentAttList["wd_Nres_IN"]
 
             if AblockEIA == 0 and blockDem == 0:
                   return {}
@@ -2333,17 +2338,13 @@ class UB_Techplan(Module):
                                     blockstrat = tt.BlockStrategy(combo, servicematrix, lotcounts, currentID, servicebin)
                                     blockstrat.setIAO("Qty", offsetmatrix[0])
                                     blockstrat.setIAO("WQ", offsetmatrix[1])
+                                    #print blockstrat
+                                    tt.CalculateMCATechScores(blockstrat,[AblockEIA, AblockEIA, blockDem],self.curscalepref, self.priorities, 
+                                          self.mca_techlist, self.mca_tech, self.mca_env, self.mca_ecn, self.mca_soc, self.iao_influence/100.0)
 
-                                    tt.CalculateMCATechScores(blockstrat,[AblockEIA, AblockEIA, blockDem],self.curscalepref, self.priorities, \
-                                                    self.mca_techlist, self.mca_tech, self.mca_env, self.mca_ecn, \
-                                                    self.mca_soc, self.iao_influence/100.0)
-
-                                    tt.CalculateMCAStratScore(blockstrat, [self.bottomlines_tech_w, self.bottomlines_env_w, \
-                                                               self.bottomlines_ecn_w, self.bottomlines_soc_w])
-                                    #Write to DB file
-                                    dbs = tt.createDataBaseString(blockstrat, AblockEIA)
-                                    self.dbcurs.execute("INSERT INTO blockstrats VALUES ("+str(dbs)+")")
-
+                                    tt.CalculateMCAStratScore(blockstrat, [self.bottomlines_tech_w, self.bottomlines_env_w, 
+                                          self.bottomlines_ecn_w, self.bottomlines_soc_w])
+                                    
                               if len(allInBlockOptions[servicebin]) < 10:         #If there are less than ten options in each bin...
                                     allInBlockOptions[servicebin].append(blockstrat)        #append the current strategy to the list of that bin
                               else:               #Otherwise get bin's lowest score, compare and replace if necessary
@@ -2359,11 +2360,6 @@ class UB_Techplan(Module):
                                     else:
                                           blockstrat = 0      #set null reference
 
-            #Transfer all to database table
-            for key in allInBlockOptions.keys():
-                  for i in range(len(allInBlockOptions[key])):
-                        dbs = tt.createDataBaseString(allInBlockOptions[key][i], AblockEIA)
-                        self.dbcurs.execute("INSERT INTO blockstratstop VALUES ("+str(dbs)+")")
             return allInBlockOptions
 
       def getServiceBinLowestScore(self, binlist):

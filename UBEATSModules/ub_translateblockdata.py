@@ -47,7 +47,7 @@ class UB_TranslateBlockData(Module):
                     "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
                     "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
                     "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
-                    "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", 
+                    "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT", 
                     "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
                     "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
                     "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
@@ -119,6 +119,7 @@ class UB_TranslateBlockData(Module):
             self.blockdata.addAttribute("DemPublicI", DOUBLE, WRITE)
             self.blockdata.addAttribute("HasHouses", DOUBLE, WRITE)
             self.blockdata.addAttribute("HouseOccup", DOUBLE, WRITE)
+            self.blockdata.addAttribute("ResFrontT", DOUBLE, WRITE)
             self.blockdata.addAttribute("avSt_RES", DOUBLE, WRITE)
             self.blockdata.addAttribute("WResNstrip", DOUBLE, WRITE)
             self.blockdata.addAttribute("ResAllots", DOUBLE, WRITE)
