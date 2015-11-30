@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*- 
-
 """
 @file
 @author  Peter M Bach <peterbach@gmail.com>
@@ -23,7 +22,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, READ to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
 from pydynamind import *
 
 #URBANBEATS IMPORTS
@@ -34,6 +32,7 @@ import tech_designbyeq as deq           #sub-functions that design based on desi
 import tech_designbysim as dsim         #sub-functions that design based on miniature simulations
 import ubseriesread as ubseries         #sub-functions responsible for processing climate data
 
+#OTHER IMPORTS
 import os, gc, random
 import numpy as np
 
@@ -993,7 +992,139 @@ class UB_Techplan(Module):
                   #---- C.4 - CONSTRUCT IN-BLOCK OPTIONS ------------------------------------
 
                   inblock_options["BlockID"+str(currentID)] = self.constructInBlockOptions(currentAttList, lot_techRES, lot_techHDR, lot_techLI, lot_techHI, lot_techCOM, street_tech, neigh_tech)
-        
+
+            ###-------------------------------------------------------------------###
+            #---  SECTION D - MONTE CARLO (ACROSS BASINS)                        ---#
+            ###-------------------------------------------------------------------###
+            gc.collect()
+
+            for i in range(int(basins)):
+                  currentBasinID = i+1
+                  print "Currently on Basin ID"+str(currentBasinID)
+
+                  basinBlockIDs, outletID = self.getBasinBlockIDs(currentBasinID, blocks_num)
+                  print "basinBlockIDs "+str(basinBlockIDs)+" "+str(outletID)
+
+                  dP_QTY, basinRemainQTY, basinTreatedQTY, basinEIA = self.calculateRemainingService("QTY", basinBlockIDs)
+                  dP_WQ, basinRemainWQ, basinTreatedWQ, basinEIA = self.calculateRemainingService("WQ", basinBlockIDs)
+                  dP_REC, basinRemainREC, basinTreatedREC, basinDem = self.calculateRemainingService("REC", basinBlockIDs)
+
+                  print "Basin Totals: "+str([basinRemainQTY, basinRemainWQ, basinRemainREC])
+                  print "Must choose a strategy now that treats: "+str([dP_QTY*100.0, dP_WQ*100.0, dP_REC*100.0])+"% of basin"
+
+                  subbasPartakeIDs = self.findSubbasinPartakeIDs(basinBlockIDs, subbas_options) #Find locations of possible WSUD
+
+                  updatedService = [dP_QTY, dP_WQ, dP_REC]
+
+                  #SKIP CONDITIONS
+                  if basinRemainQTY == 0.0 and basinRemainWQ == 0.0 and basinRemainREC == 0.0:
+                        #print "Basin ID: ", currentBasinID, " has no remaining service requirements, skipping!"
+                        continue
+                  if sum(updatedService) == 0:
+                        continue
+
+                  iterations = self.maxMCiterations   #MONTE CARLO ITERATIONS - CAN SET TO SENSITIVITY VALUE IN FUTURE RELATIVE TO BASIN SIZE
+
+                  if len(basinBlockIDs) == 1: #if we are dealing with a single-block basin, reduce the number of iterations
+                        iterations = self.maxMCiterations/10        #If only one block in basin, do different/smaller number of iterations
+                  
+                  #Begin Monte Carlo
+                  
+                  basin_strategies = []
+                  for iteration in range(iterations):   #1000 monte carlo simulations
+                        print "Current Iteration No. "+str(iteration+1)
+                        #Draw Samples
+                        subbas_chosenIDs, inblocks_chosenIDs = self.selectTechLocationsByRandom(subbasPartakeIDs, basinBlockIDs)
+                        #print "Selected Locations: Subbasins ", subbas_chosenIDs, " In Blocks ", inblocks_chosenIDs
+
+                        #Create the Basin Management Strategy Object
+                        current_bstrategy = tt.BasinManagementStrategy(iteration+1, currentBasinID,
+                                 basinBlockIDs, subbasPartakeIDs,
+                                 [basinRemainQTY, basinRemainWQ, basinRemainREC])
+
+                        #Populate Basin Management Strategy Object based on the current sampled values
+                        self.populateBasinWithTech(current_bstrategy, subbas_chosenIDs, inblocks_chosenIDs,
+                        inblock_options, subbas_options, basinBlockIDs)
+
+                        tt.updateBasinService(current_bstrategy)
+                        #print current_bstrategy.getSubbasinArray()
+                        #print (current_bstrategy.getInBlocksArray()
+
+                        tt.calculateBasinStrategyMCAScores(current_bstrategy,self.curscalepref, self.priorities, self.mca_techlist, self.mca_tech, \
+                        self.mca_env, self.mca_ecn, self.mca_soc, \
+                        [self.bottomlines_tech_w, self.bottomlines_env_w, \
+                                 self.bottomlines_ecn_w, self.bottomlines_soc_w], self.iao_influence/100.0)
+
+                        #Add basin strategy to list of possibilities
+                        service_objfunc = self.evaluateServiceObjectiveFunction(current_bstrategy, updatedService)        #Calculates how well it meets the total service
+
+                        self.penalizeMCAscore(current_bstrategy, self.score_strat, updatedService)
+
+                        basin_strategies.append([service_objfunc,current_bstrategy.getServicePvalues(), current_bstrategy.getTotalMCAscore(), current_bstrategy])
+
+                  #Pick the final option by narrowing down the list and choosing (based on how many
+                  #need to be chosen), sort and grab the top ranking options
+                  basin_strategies.sort()
+                  print basin_strategies
+                  self.debugPlanning(basin_strategies, currentBasinID)
+                  acceptable_options = []
+                  for j in range(len(basin_strategies)):
+                        if basin_strategies[j][0] < 0:  #if the OF is <0 i.e. -1, skip
+                              continue
+                        else:
+                              acceptable_options.append(basin_strategies[j])
+                  #self.notify(acceptable_options)
+                  if self.ranktype == "RK":
+                        acceptable_options = acceptable_options[0:int(self.topranklimit)]
+                  elif self.ranktype == "CI":
+                        acceptableN = int(len(acceptable_options)*(1.0-float(self.conf_int)/100.0))
+                        acceptable_options = acceptable_options[0:acceptableN]
+
+                  topcount = len(acceptable_options)
+                  acceptable_options.sort(key=lambda score: score[2], reverse=True)
+                  print acceptable_options
+
+                  #Choose final option
+                  numselect = min(topcount, self.num_output_strats)   #Determines how many options out of the matrix it should select
+                  final_selection = []
+                  if self.pickingmethod == "TOP":
+                        checkvar = []
+                        for j in range(int(numselect)):
+                              checkvar.append(acceptable_options[j])
+                              final_selection.append([acceptable_options[j][3],acceptable_options[j][2]]) #[strategy object, score]
+                        print checkvar
+                  elif self.pickingmethod == "RND":
+                        for j in range(int(numselect)):
+                              score_matrix = []       #Create the score matrix
+                              for opt in acceptable_options:
+                                    score_matrix.append(opt[2])
+                              selection_cdf = self.createCDF(score_matrix)    #Creat the CDF
+                              choice = self.samplefromCDF(selection_cdf)
+                              final_selection.append([acceptable_options[choice][3],acceptable_options[j][2]])   #[strategy object , score]
+                              acceptable_options.pop(choice)  #Pop the option at the selected index from the matrix
+                              #Repeat for as many options as requested
+
+                  #Write WSUD strategy attributes to output vector for that block
+                  self.notify(final_selection)
+                  if len(final_selection) == 0:
+                        self.transferExistingSystemsToOutput(1, 0)
+                        #If there are no additional plans, just tranfer systems across, only one output as StrategyID1
+
+                  for j in range(len(final_selection)):       #Otherwise it'll loop
+                        cur_strat = final_selection[j]
+                        stratID = j+1
+                        self.writeStrategyView(stratID, currentBasinID, basinBlockIDs, cur_strat)
+                        self.transferExistingSystemsToOutput(stratID, cur_strat[1])
+
+                  #Clear the array and garbage collect
+                  basin_strategies = []
+                  acceptable_options = []
+                  final_selection = []
+                  gc.collect()
+                  #END OF BASIN LOOP, continues to next basin
+
+            #END OF MODULE
+
 
       ######################################
       #--- FUNCTIONS FOR PRE-PROCESSING ---#
@@ -2448,3 +2579,503 @@ class UB_Techplan(Module):
                         continue
                   #self.notify("Bin: "+str(max(self.subbas_incr)))
             return max(self.subbas_incr)
+
+      ######################################
+      #--- GENERATING BASIN REALISATION ---#
+      ######################################
+      def getBasinBlockIDs(self, currentBasinID, numblocks):
+            """Retrieves all blockIDs within the single basin and returns them in the order
+            of upstream to downstream based on the length of the upstream strings."""
+            basinblocksortarray = []
+            basinblockIDs = []
+            outletID = 0
+            for i in range(int(numblocks)):
+                  currentID = i+1
+                  #currentAttList = self.getBlockUUID(currentID, city)
+                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentID))
+                  if currentAttList.getAttribute("BasinID") != currentBasinID:
+                        continue
+                  else:
+                        upstr = currentAttList.getAttribute("UpstrIDs")
+                        upstreamIDs = upstr.split(',')
+                        upstreamIDs.remove('')
+                        basinblocksortarray.append([len(upstreamIDs),currentID])
+                  if currentAttList.getAttribute("Outlet") == 1:
+                        outletID = currentID
+            basinblocksortarray.sort()      #sort ascending based on length of upstream string
+            for i in range(len(basinblocksortarray)):
+                  basinblockIDs.append(basinblocksortarray[i][1])     #append just the ID of block
+            return basinblockIDs, outletID
+
+
+      def findSubbasinPartakeIDs(self, basinBlockIDs, subbas_options):
+            """Searches the blocks within the basin for locations of possible sub-basin scale
+            technologies and returns a list of IDs"""
+            partake_IDs = []
+            for i in range(len(basinBlockIDs)):
+                  currentID = int(basinBlockIDs[i])
+                  try:
+                        if len(subbas_options["BlockID"+str(currentID)]) != 0:
+                              partake_IDs.append(currentID)
+                        else:
+                              continue
+                  except KeyError:
+                        continue
+            return partake_IDs
+
+
+      def selectTechLocationsByRandom(self, partakeIDs, basinblockIDs):
+            """Samples by random a number of sub-basin scale technologies and in-block locations
+            for the model to place technologies in, returns two arrays: one of the chosen
+            sub-basin IDs and one of the chosen in-block locations"""
+            partakeIDsTEMP = []     #Make copies of the arrays to prevent reference-modification
+            for i in partakeIDs:
+                  partakeIDsTEMP.append(i)
+            basinblockIDsTEMP = []
+            for i in basinblockIDs:
+                  basinblockIDsTEMP.append(i)
+
+            techs_subbas = random.randint(0,len(partakeIDsTEMP))
+            subbas_chosenIDs = []
+            for j in range(techs_subbas):
+                  sample_index = random.randint(0,len(partakeIDsTEMP)-1)
+                  subbas_chosenIDs.append(partakeIDsTEMP[sample_index])
+                  basinblockIDsTEMP.remove(partakeIDsTEMP[sample_index]) #remove from blocks possibilities
+                  partakeIDsTEMP.pop(sample_index)    #pop the value from the partake list
+
+            techs_blocks = random.randint(0, len(basinblockIDsTEMP))
+            inblocks_chosenIDs = []
+            for j in range(techs_blocks):
+                  sample_index = random.randint(0,len(basinblockIDsTEMP)-1)       #If sampling an index, must subtract 1 from len()
+                  inblocks_chosenIDs.append(basinblockIDsTEMP[sample_index])
+                  basinblockIDsTEMP.pop(sample_index)
+
+            #Reset arrays
+            basinblockIDsTEMP = []
+            partakeIDsTEMP = []
+            return subbas_chosenIDs, inblocks_chosenIDs
+
+
+      def calculateRemainingService(self, servtype, basinBlockIDs):
+            """Assesses the alread treated area/demand for the current basin and returns
+            the remaining area/demand to be treated with a strategy.
+            - Type: refers to the type of objective "QTY" = quantity, WQ = quality, 
+            REC = recycling
+            - basinBlockIDs: array containing all IDs within the current basin
+            """
+            #self.notify(basinBlockIDs)
+            #self.notify(type)
+            # print "Basin Blocks", basinBlockIDs
+            # print servtype
+
+            if servtype in ["WQ", "QTY"]:
+                  total = self.retrieveAttributeFromIDs(basinBlockIDs, "Manage_EIA", "sum")
+            elif servtype in ["REC"]:
+                  total = self.retrieveAttributeFromIDs(basinBlockIDs, "Blk_WD", "sum") - \
+                              self.retrieveAttributeFromIDs(basinBlockIDs, "wd_Nres_IN", "sum")
+
+            # print "total", total
+            # print "Total Imp Area: "+str(total)
+            basinTreated = self.retrieveAttributeFromIDs(basinBlockIDs, "Serv"+str(servtype), "sum")
+            basinTreated += self.retrieveAttributeFromIDs(basinBlockIDs, "ServUp"+str(servtype), "sum")
+            if int(basinTreated) == 0:
+                  basinTreated = 0.0
+
+            # print "Treated: ", basinTreated
+            # print "Treated ImpArea: "+str(basinTreated)
+            rationales = {"QTY": bool(int(self.ration_runoff)), "WQ": bool(int(self.ration_pollute)),
+                              "REC": bool(int(self.ration_harvest)) }
+            services = {"QTY": float(self.servicevector[0]), "WQ": float(self.servicevector[1]), "REC": float(self.servicevector[2])}
+
+            if rationales[servtype]:
+                  basinRemain = max(total - basinTreated, 0)
+            else:
+                  basinRemain = 0
+            # print "Total remaining: ", basinRemain
+
+            if total == 0:
+                  prevService = 1
+            else:
+                  prevService = float(basinTreated)/float(total)
+
+            if max(1- prevService, 0) == 0:
+                  delta_percent = 0.0
+            else:
+                  delta_percent = max(services[servtype]/100.0*rationales[servtype] - prevService,0.0) / (1.0 - prevService)
+            return delta_percent, basinRemain, basinTreated, total
+
+
+      def populateBasinWithTech(self, current_bstrategy, subbas_chosenIDs, inblocks_chosenIDs, 
+                              inblock_options, subbas_options, basinBlockIDs):
+            """Scans through all blocks within a basin from upstream to downstream end and populates the
+            various areas selected in chosenIDs arrays with possible technologies available from the 
+            options arrays. Returns an updated current_bstrategy object completed with all details.
+            """
+            partakeIDs = current_bstrategy.getSubbasPartakeIDs()    #returned in order upstream-->downstream
+
+            #Make a copy of partakeIDs to track blocks
+            partakeIDsTracker = []
+            for id in partakeIDs:
+                  partakeIDsTracker.append(id)
+
+            #Initialize variables to track objective fulfillment
+            subbasID_treatedQTY = {}
+            subbasID_treatedWQ = {}
+            subbasID_treatedREC = {}
+            for i in range(len(partakeIDs)):
+                  subbasID_treatedQTY[partakeIDs[i]] = 0
+                  subbasID_treatedWQ[partakeIDs[i]] = 0
+                  subbasID_treatedREC[partakeIDs[i]] = 0
+
+            #Loop across partakeID blocks (i.e. all blocks, which have a precinct tech)
+            for i in range(len(partakeIDs)):
+                  currentBlockID = partakeIDs[i]      #DENOTES CURRENT POSITION IN THE MAP
+                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentBlockID))
+                  #print "Currently on BlockID: "+str(currentBlockID)
+
+                  upstreamIDs = self.retrieveStreamBlockIDs(currentAttList, "upstream")
+                  downstreamIDs = self.retrieveStreamBlockIDs(currentAttList, "downstream")
+                  #print "Upstream Blocks: "+str(upstreamIDs)+" downstream Blocks: "+str(downstreamIDs)
+
+                  remainIDs = []    #All blocks upstream of current location that are unique to that location in the sub-basin
+                  for id in upstreamIDs:
+                        remainIDs.append(id)
+
+                  #(1) See if there are existing sub-basins inside the current sub-basin
+                  subbasinIDs = []            #All blocks that are sub-basins within the subbasin denoted by the current location
+                  for id in partakeIDsTracker:
+                        if id in upstreamIDs:
+                              subbasinIDs.append(id)
+                  #print "Subbasins upstream of current location "+str(subbasinIDs)
+                  
+                  for sbID in subbasinIDs:                  #then loop over the locations found and
+                        partakeIDsTracker.remove(sbID)      #remove these from the tracker list so
+                                                            #that they are not doubled up
+                  
+                  for id in subbasinIDs:
+                        remainIDs.remove(id)            #remove the sub-basin ID's ID from remainIDs
+                        #upstrIDs = self.retrieveStreamBlockIDs(self.getBlockUUID(id, city), "upstream")
+                        upstrIDs = self.retrieveStreamBlockIDs(self.activesim.getAssetWithName("BlockID"+str(id)), "upstream")
+                        for upID in upstrIDs:   #Also remove all sub-basinID's upstream block IDs from
+                              remainIDs.remove(upID)   #remain IDs, leaving ONLY Blocks local to currentBlockID
+                  #print "Blocks local to current location: "+str(remainIDs)
+
+                  #(2) Obtain highest allowable degree of treatment (Max_Degree)
+                  #------- 2.1 Get Total Imp/Dem needing to be treated at the current position
+                  upstreamIDs.append(currentBlockID)
+                  downstreamIDs.append(currentBlockID)        #Add currentBlockID to the array
+
+                  dp, totalAimpQTY, sv, cp = self.calculateRemainingService("QTY", upstreamIDs)
+
+                  dp, totalAimpWQ, sv, cp = self.calculateRemainingService("WQ", upstreamIDs)
+
+                  #print "Total Quantity Aimp: "+str(totalAimpQTY)
+                  #print "Total Water Quality Aimp: "+str(totalAimpWQ)
+
+                  if self.hs_strategy == "ud":
+                        dP, totalDemREC, sv,cp = self.calculateRemainingService("REC", downstreamIDs)
+                  elif self.hs_strategy == "uu":
+                        dP, totalDemREC, sv, cp = self.calculateRemainingService("REC", upstreamIDs)
+                  elif self.hs_strategy == "ua":
+                        dP, totalDemREC, sv, cp = self.calculateRemainingService("REC", basinBlockIDs)
+
+                  #------- 2.2 Subtract the already serviced parts from upstream sub-basin blocks
+                  max_deg_matrix = []
+                  subbas_treatedAimpQTY = 0  #Sum of already treated imp area in upstream sub-basins and the now planned treatment
+                  subbas_treatedAimpWQ = 0
+                  subbas_treatedDemREC = 0
+
+                  for sbID in subbasinIDs:
+                        subbas_treatedAimpQTY += subbasID_treatedQTY[sbID]  #Check all upstream sub-basins for their treated Aimp            
+                        subbas_treatedAimpWQ += subbasID_treatedWQ[sbID]    #Check all upstream sub-basins for their treated Aimp            
+
+                  #print subbas_treatedAimpQTY
+                  #print subbas_treatedAimpWQ
+
+                  remainAimp_subbasinQTY = max(totalAimpQTY - subbas_treatedAimpQTY, 0)
+                  if bool(int(self.ration_runoff)) and totalAimpQTY != 0:
+                        max_deg_matrix.append(remainAimp_subbasinQTY / totalAimpQTY)
+                  #else:
+                        #max_deg_matrix.append(0)
+
+                  remainAimp_subbasinWQ = max(totalAimpWQ - subbas_treatedAimpWQ, 0)
+                  if bool(int(self.ration_pollute)) and totalAimpWQ != 0:
+                        max_deg_matrix.append(remainAimp_subbasinWQ / totalAimpWQ)
+                  #else:
+                        #max_deg_matrix.append(0)
+
+                  if self.hs_strategy == 'ud':
+                        totSupply = 0
+                        downstreamIDs = []      #the complete matrix of all downstream IDs from all upstream sbIDs
+                        for sbID in subbasinIDs:
+                              totSupply += subbasID_treatedREC[sbID]      #Get total supply of all combined upstream systems
+                              #downIDs = self.retrieveStreamBlockIDs(self.getBlockUUID(sbID, city), "downstream")
+                              downIDs = self.retrieveStreamBlockIDs(self.activesim.getAssetWithName("BlockID"+str(sbID)), "downstream")
+                              downIDs.append(sbID)
+                              for dID in downIDs:
+                                    if dID not in downstreamIDs: downstreamIDs.append(dID)
+                        #Get all blocks between currentID's upstream and sbIDs downstream blocks
+                        shareIDs = []
+                        for dID in downstreamIDs:
+                              if dID in upstreamIDs and dID not in shareIDs:
+                                    shareIDs.append(dID)
+                        #Calculate Total Water Demand of Blocks in between the current point and highest upstream point
+                        totBetweenDem = self.retrieveAttributeFromIDs(shareIDs, "Blk_WD", "sum") - \
+                                    self.retrieveAttributeFromIDs(shareIDs, "wd_Nres_IN", "sum")
+                        #Remaining demand is total downstream demand minus the higher of (total upstream supply excess and zero)
+                        remainDem_subbasinRec = totalDemREC - max(totSupply - totBetweenDem, 0)
+                  elif self.hs_strategy in ['uu', 'ua']:
+                        for sbID in subbasinIDs:
+                              subbas_treatedDemREC += subbasID_treatedREC[sbID]
+                        remainDem_subbasinRec = max(totalDemREC - subbas_treatedDemREC, 0)
+
+                  if bool(int(self.ration_harvest)) and totalDemREC != 0:
+                        max_deg_matrix.append(remainDem_subbasinRec / totalDemREC)
+                  #else:
+                        #max_deg_matrix.append(0)
+
+                  # print "Max_deg_matrix", max_deg_matrix
+                  # print "Max Degre matrix: "+str(max_deg_matrix)
+                  max_degree = min(max_deg_matrix)+float(self.service_redundancy/100.0)  #choose the minimum, bring in allowance using redundancy parameter
+
+                  current_bstrategy.addSubBasinInfo(currentBlockID, upstreamIDs, subbasinIDs, [totalAimpQTY,totalAimpWQ,totalDemREC])
+                  #print [totalAimpQTY,totalAimpWQ,totalDemREC]
+                  #print "Current State of Treatment: "+str([subbas_treatedAimpQTY, subbas_treatedAimpWQ, subbas_treatedDemREC])
+
+                  #(3) PICK A SUB-BASIN TECHNOLOGY
+                  if currentBlockID in subbas_chosenIDs:
+                        deg, obj, treatedQTY, treatedWQ, treatedREC, iaoqty, iaowq = self.pickOption(currentBlockID, max_degree, subbas_options, [totalAimpQTY, totalAimpWQ, totalDemREC], "SB")
+                        #print "Option Treats: "+str([treatedQTY, treatedWQ, treatedREC])
+                        #print obj
+
+                        subbas_treatedAimpQTY += treatedQTY + iaoqty
+                        subbas_treatedAimpWQ += treatedWQ + iaowq
+                        subbas_treatedDemREC += treatedREC
+                        remainAimp_subbasinQTY = max(remainAimp_subbasinQTY - treatedQTY, 0)
+                        remainAimp_subbasinWQ = max(remainAimp_subbasinWQ - treatedWQ, 0)
+                        remainDem_subbasinRec = max(remainDem_subbasinRec - treatedREC, 0)
+                        #print "Remaining: "+str([remainAimp_subbasinQTY, remainAimp_subbasinWQ, remainDem_subbasinRec])
+                        if deg != 0 and obj != 0:
+                              current_bstrategy.appendTechnology(currentBlockID, deg, obj, "s")
+
+                  #(4) PICK AN IN-BLOCK STRATEGY IF IT IS HAS BEEN CHOSEN
+                  for rbID in remainIDs:
+                        if rbID not in inblocks_chosenIDs:        #If the Block ID hasn't been chosen,
+                              #self.notify("rbID not in inblocks_chosenIDs")
+                              continue                            #then skip to next one, no point otherwise
+
+                        max_deg_matrix = [1]
+                        #block_Aimp = self.getBlockUUID(rbID, city).getAttribute("Manage_EIA")
+                        block_Aimp = self.activesim.getAssetWithName("BlockID"+str(rbID)).getAttribute("Manage_EIA")
+                        #block_Dem = self.getBlockUUID(rbID, city).getAttribute("Blk_WD") - self.getBlockUUID(rbID, city).getAttribute("wd_Nres_IN")
+                        block_Dem = self.activesim.getAssetWithName("BlockID"+str(rbID)).getAttribute("Blk_WD") - self.activesim.getAssetWithName("BlockID"+str(rbID)).getAttribute("wd_Nres_IN")
+                        #print "Block details: "+str(block_Aimp)+" "+str(block_Dem)
+                        if block_Aimp == 0:     #Impervious governs pretty much everything, if it is zero, don't even bother
+                              continue
+                        if block_Dem == 0 and bool(int(self.ration_harvest)):   #If demand is zero and we are planning for recycling, skip
+                              continue
+                        #print "Can select a block option for current Block"
+
+                        if bool(int(self.ration_runoff)):
+                              max_deg_matrix.append(remainAimp_subbasinQTY/block_Aimp)
+                        if bool(int(self.ration_pollute)):
+                              max_deg_matrix.append(remainAimp_subbasinWQ/block_Aimp)
+                        if bool(int(self.ration_harvest)):
+                              max_deg_matrix.append(remainDem_subbasinRec/block_Dem)
+                        #print "Block Degrees: "+str(max_deg_matrix)
+                        max_degree = min(max_deg_matrix) + float(self.service_redundancy/100)
+                        #print str([block_Aimp*int(self.ration_runoff))+" "+str(block_Aimp*int(self.ration_pollute))+" "+str(block_Dem*int(self.ration_harvest)])
+
+                        #print "In Block Maximum Degree: "+str(max_degree)
+                        deg, obj, treatedQTY, treatedWQ, treatedREC, iaoqty, iaowq = self.pickOption(rbID,max_degree,inblock_options, [block_Aimp*bool(int(self.ration_runoff)), block_Aimp*bool(int(self.ration_pollute)), block_Dem*bool(int(self.ration_harvest))], "BS")
+                        #print "Option Treats: "+str([treatedQTY, treatedWQ, treatedREC])
+                        #print obj
+
+                        subbas_treatedAimpQTY += treatedQTY + iaoqty
+                        subbas_treatedAimpWQ += treatedWQ + iaowq
+                        subbas_treatedDemREC += treatedREC
+                        remainAimp_subbasinQTY = max(remainAimp_subbasinQTY - treatedQTY, 0)
+                        remainAimp_subbasinWQ = max(remainAimp_subbasinWQ - treatedWQ, 0)
+                        remainDem_subbasinRec = max(remainDem_subbasinRec - treatedREC, 0)
+                        #print "Remaining: "+str([remainAimp_subbasinQTY, remainAimp_subbasinWQ, remainDem_subbasinRec])
+                        if deg != 0 and obj != 0:
+                              current_bstrategy.appendTechnology(rbID, deg, obj, "b")
+
+                  #(5) FINALIZE THE SERVICE VALUES FOR QTY, WQ, REC BEFORE NEXT LOOP
+                  #Impervious area offset will result in options going over treatment threshold.
+                  subbasID_treatedQTY[currentBlockID] = subbas_treatedAimpQTY #min(subbas_treatedAimpQTY, totalAimpQTY)
+                  subbasID_treatedWQ[currentBlockID] = subbas_treatedAimpWQ #min(subbas_treatedAimpWQ, totalAimpWQ)
+                  subbasID_treatedREC[currentBlockID] = min(subbas_treatedDemREC, totalDemREC)
+                  #print subbasID_treatedQTY
+                  #print subbasID_treatedWQ
+            return True
+
+      #################################################
+      #--- RANKING AND CHOOSING BASIN REALISATIONS ---#
+      #################################################
+      def evaluateServiceObjectiveFunction(self, basinstrategy, updatedservice):
+            """Calculates how close the basinstrategy meets the required service
+            levels set by the user. A performance metric is returned. If one of the
+            service levels has not been met, performance is automatically assigned
+            a value of -1. It will then be removed in the main program.
+            The objective function used to find the optimum strategies is calculated
+            as:
+            choice = min { sum(serviceProvided - serviceRequired) }, OF >0
+            updatedservice = [serviceQty, serviceWQ, serviceREC] based on delta_percent
+            """
+            serviceQty = float(int(self.ration_runoff))*float(updatedservice[0])
+            serviceWQ = float(int(self.ration_pollute))*float(updatedservice[1])
+            serviceRec = float(int(self.ration_harvest))*float(updatedservice[2])
+            serviceRequired = [serviceQty, serviceWQ, serviceRec]
+            serviceBooleans = [int(self.ration_runoff), int(self.ration_pollute), int(self.ration_harvest)]
+
+            serviceProvided = basinstrategy.getServicePvalues() #[0,0,0] P values for service
+            for i in range(len(serviceProvided)):
+                  serviceProvided[i] *= float(serviceBooleans[i])     #Rescale to ensure no service items are zero
+            #print "Service Req "+str(serviceProvided)
+            #print "Service Provided "+str(serviceRequired)
+            
+            #Objective Criterion: A strategy is most suitable to the user's input
+            #requirements if the sum(service-provided - service-required) is a minimum
+            #and >0
+            negative = False
+            performance = 0
+            for i in range(len(serviceProvided)):
+                  performance += (serviceProvided[i] - serviceRequired[i])
+                  if (serviceProvided[i] - serviceRequired[i]) < 0:
+                        negative = True
+            if negative:
+                  performance = -1       #One objective at least, not fulfilled
+            return performance
+
+      def pickOption(self, blockID, max_degree, options_collection, totals, strattype):
+      """Picks and returns a random option based on the input impervious area and maximum
+      treatment degree. Can be used on either the in-block strategies or larger precinct 
+      strategies. If it cannot pick anything, it will return zeros all around.
+      """
+      bracketwidth = 1.0/float(self.subbas_rigour)    #Use bracket to determine optimum bin
+
+      #print options_collection["BlockID"+str(blockID)]
+      if strattype == "BS":   #in-block strategy
+            options = []
+
+            #Continuous-based picking
+            for i in options_collection["BlockID"+str(blockID)].keys():
+                  if (i-bracketwidth/2) >= max_degree:                
+                        continue
+                  for j in options_collection["BlockID"+str(blockID)][i]:
+                        options.append(j)
+
+            #Bin-based picking
+            #            degs = []   #holds all the possible increments within max_degree
+            #            for i in options_collection["BlockID"+str(blockID)].keys():
+            #                if (i-bracketwidth/2) <= max_degree:                
+            #                    degs.append(i)  #add as a possible increment
+            #            if len(degs) != 0:
+            #                chosen_deg = degs[random.randint(0, len(degs)-1)]
+            #                for j in options_collection["BlockID"+str(blockID)][chosen_deg]:
+            #                    options.append(j)
+
+            if len(options) == 0:
+                  return 0, 0, 0, 0, 0, 0, 0
+            scores = []
+            for i in options:
+                  scores.append(i.getTotalMCAscore())
+
+            #print "Scores: "+str(scores)
+
+            #Pick Option
+            scores = self.createCDF(scores)
+            #print "Scores CDF: "+str(scores)
+            choice = self.samplefromCDF(scores)
+            #print choice
+            chosen_obj = options[choice]
+
+            #            AimpQTY = totals[0]
+            #            AimpWQ = totals[1]
+            #            DemREC = totals[2]
+            #            treatedAimpQTY = chosen_deg * AimpQTY
+            #            treatedAimpWQ = chosen_deg * AimpWQ
+            #            treatedDemREC = chosen_deg * DemREC            
+            treatedAimpQTY = chosen_obj.getService("Qty")
+            iaoqty = chosen_obj.getIAO("Qty")
+            treatedAimpWQ = chosen_obj.getService("WQ")
+            iaowq = chosen_obj.getIAO("WQ")
+            treatedDemREC = chosen_obj.getService("Rec")
+            return chosen_obj.getBlockBin(), chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
+
+      elif strattype == "SB":  #sub-basin strategy
+            #Continuous-based picking
+            options = []
+            for deg in self.subbas_incr:
+                  if(deg-bracketwidth/2) >= max_degree:
+                        continue
+                  for j in options_collection["BlockID"+str(blockID)][deg]:
+                        options.append(j)
+
+            if len(options) != 0:
+                  chosen_obj = options[random.randint(0, len(options)-1)]
+
+            #Bin-based picking
+            #            AimpQTY = totals[0]
+            #            AimpWQ = totals[1]
+            #            DemREC = totals[2]
+            #            indices = []
+            #            for deg in self.subbas_incr:
+            #                if (deg-bracketwidth/2) <= max_degree:
+            #                    indices.append(deg)
+            #            if len(indices) != 0:
+            #                choice = random.randint(0, len(indices)-1)
+            #                chosen_deg = self.subbas_incr[choice]
+            #            else:
+            #                return 0, 0, 0, 0, 0
+            #            
+            #            Nopt = len(options_collection["BlockID"+str(blockID)][chosen_deg])
+            #            
+            #            if Nopt != 0:
+            #            #if chosen_deg != 0 and Nopt != 0:
+            ##                treatedAimpQTY = chosen_deg * AimpQTY
+            ##                treatedAimpWQ = chosen_deg * AimpWQ
+            ##                treatedDemREC = chosen_deg * DemREC
+            #                choice = random.randint(0, Nopt-1)
+            #                chosen_obj = options_collection["BlockID"+str(blockID)][chosen_deg][choice]
+            #                
+            if chosen_obj == 0:
+                  return 0, 0, 0, 0, 0, 0, 0
+            chosen_deg = chosen_obj.getDesignIncrement()
+            treatedAimpQTY = chosen_obj.getService("Qty")
+            iaoqty = chosen_obj.getIAO("Qty")
+            treatedAimpWQ = chosen_obj.getService("WQ")
+            iaowq = chosen_obj.getIAO("WQ")
+            treatedDemREC = chosen_obj.getService("Rec")
+
+            return chosen_deg, chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
+      else:
+            return 0, 0, 0, 0, 0, 0, 0
+
+      def createCDF(self, score_matrix):
+            """Creates a cumulative distribution for an input list of values by normalizing
+            these first and subsequently summing probabilities.
+            """
+            pdf = []
+            cdf = []
+            for i in range(len(score_matrix)):
+                  if sum(score_matrix) == 0:
+                        pdf.append(1.0/float(len(score_matrix)))
+                  else:
+                        pdf.append(score_matrix[i]/sum(score_matrix))
+            cumu_p = 0
+            for i in range(len(pdf)):
+                  cumu_p += pdf[i]
+                  cdf.append(cumu_p)
+            cdf[len(cdf)-1] = 1.0   #Adjust for rounding errors
+            return cdf
+
+      def samplefromCDF(self, selection_cdf):
+            """Samples one sample from a cumulative distribution function and returns
+            the index. Sampling is uniform, probabilities are determined by the CDF"""
+            p_sample = random.random()
+            for i in range(len(selection_cdf)):
+                  if p_sample <= selection_cdf[i]:
+                        return i
+            return (len(selection_cdf)-1)
