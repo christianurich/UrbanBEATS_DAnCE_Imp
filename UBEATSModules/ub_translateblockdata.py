@@ -53,8 +53,12 @@ class UB_TranslateBlockData(Module):
                     "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
                     "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", "LIjobs", 
                     "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
-                    "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", 
-                    "LIAeTIA", "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
+                    "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA", 
+                    "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg", 
+                    "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA", 
+                    "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg", 
+                    "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA", 
+                    "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
                     "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
                     "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
                     "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
@@ -169,7 +173,7 @@ class UB_TranslateBlockData(Module):
             self.blockdata.addAttribute("HIAeLgrey", DOUBLE, WRITE)
             self.blockdata.addAttribute("HIAeEIA", DOUBLE, WRITE)
             self.blockdata.addAttribute("HIAeTIA", DOUBLE, WRITE)
-            self.blockdata.addAttribute("Has_COM", DOUBLE, WRITE)
+            self.blockdata.addAttribute("Has_Com", DOUBLE, WRITE)
             self.blockdata.addAttribute("COMjobs", DOUBLE, WRITE)
             self.blockdata.addAttribute("COMestates", DOUBLE, WRITE)
             self.blockdata.addAttribute("avSt_COM", DOUBLE, WRITE)
@@ -218,6 +222,14 @@ class UB_TranslateBlockData(Module):
             self.blockdata.addAttribute("Blk_Com", DOUBLE, WRITE)
             self.blockdata.addAttribute("Blk_Ind", DOUBLE, WRITE)
             self.blockdata.addAttribute("Blk_PubIrr", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasL_RESSys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasL_HDRSys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasL_LISys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasL_HISys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasL_COMSys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasSSys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasNSys", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HasBSys", DOUBLE, WRITE)
          
             self.registerViewContainers([self.blockdata, self.regiondata])
 
@@ -252,10 +264,24 @@ class UB_TranslateBlockData(Module):
                     if att=="HIestates":
                         blockcomp.SetField("Has_HI", int(datadict[att][i]!=0))
                     if att=="COMestates":
-                        blockcomp.SetField("Has_COM", int(datadict[att][i]!=0))
+                        blockcomp.SetField("Has_Com", int(datadict[att][i]!=0))
                     if att=="ORCestates":
                         blockcomp.SetField("Has_ORC", int(datadict[att][i]!=0))
+                    if att=="downID":
+                        if int(datadict[att][i]) != -1:
+                            blockcomp.SetField("downID", int(datadict[att][i]))
+                        else:
+                            blockcomp.SetField("downID", int(datadict["drainID"][i]))
             
+                blockcomp.SetField("HasL_RESSys", 0)
+                blockcomp.SetField("HasL_HDRSys", 0)
+                blockcomp.SetField("HasL_LISys", 0)
+                blockcomp.SetField("HasL_HISys", 0)
+                blockcomp.SetField("HasL_COMSys", 0)
+                blockcomp.SetField("HasSSys", 0)
+                blockcomp.SetField("HasNSys", 0)
+                blockcomp.SetField("HasBSys", 0)
+                
             self.regiondata.finalise()
             self.blockdata.finalise()
 

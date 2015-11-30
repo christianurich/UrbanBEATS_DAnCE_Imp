@@ -562,15 +562,27 @@ class UB_Techplan(Module):
                     "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
                     "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
                     "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
-                    "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", "LIjobs", 
-                    "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
-                    "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", 
-                    "LIAeTIA", "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
+                    "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", 
+                    "LIjobs", "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
+                    "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA", 
+                    "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg", 
+                    "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA", 
+                    "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg", 
+                    "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA", 
+                    "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
                     "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
                     "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
                     "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
                     "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
-                    "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr"]
+                    "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats", 
+                    "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys"
+                    "HasL_HISys", "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
+
+            self.blockDict = {}
+            self.blockIDlist = []
+            self.downIDlist = []
+
+
 
       def init(self):
 
@@ -624,6 +636,7 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("RD_av", DOUBLE, READ)
             self.blockdata.addAttribute("RDMedW", DOUBLE, READ)
             self.blockdata.addAttribute("DemPublicI", DOUBLE, READ)
+            self.blockdata.addAttribute("HasHouses", DOUBLE, READ)
             self.blockdata.addAttribute("HouseOccup", DOUBLE, READ)
             self.blockdata.addAttribute("avSt_RES", DOUBLE, READ)
             self.blockdata.addAttribute("WResNstrip", DOUBLE, READ)
@@ -638,6 +651,7 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("ResGarden", DOUBLE, READ)
             self.blockdata.addAttribute("DemPrivI", DOUBLE, READ)
             self.blockdata.addAttribute("ResRoofCon", DOUBLE, READ)
+            self.blockdata.addAttribute("HasFlats", DOUBLE, READ)
             self.blockdata.addAttribute("HDRFlats", DOUBLE, READ)
             self.blockdata.addAttribute("HDRRoofA", DOUBLE, READ)
             self.blockdata.addAttribute("HDROccup", DOUBLE, READ)
@@ -648,6 +662,7 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("HDRGarden", DOUBLE, READ)
             self.blockdata.addAttribute("HDRCarPark", DOUBLE, READ)
             self.blockdata.addAttribute("DemAptI", DOUBLE, READ)
+            self.blockdata.addAttribute("Has_LI", DOUBLE, READ)
             self.blockdata.addAttribute("LIjobs", DOUBLE, READ)
             self.blockdata.addAttribute("LIestates", DOUBLE, READ)
             self.blockdata.addAttribute("avSt_LI", DOUBLE, READ)
@@ -662,6 +677,22 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("LIAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("LIAeEIA", DOUBLE, READ)
             self.blockdata.addAttribute("LIAeTIA", DOUBLE, READ)
+            self.blockdata.addAttribute("Has_HI", DOUBLE, READ)
+            self.blockdata.addAttribute("HIjobs", DOUBLE, READ)
+            self.blockdata.addAttribute("HIestates", DOUBLE, READ)
+            self.blockdata.addAttribute("avSt_HI", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAfront", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAfrEIA", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAestate", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAeBldg", DOUBLE, READ)
+            self.blockdata.addAttribute("HIFloors", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAeLoad", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAeCPark", DOUBLE, READ)
+            self.blockdata.addAttribute("avLt_HI", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAeLgrey", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAeEIA", DOUBLE, READ)
+            self.blockdata.addAttribute("HIAeTIA", DOUBLE, READ)
+            self.blockdata.addAttribute("Has_Com", DOUBLE, READ)
             self.blockdata.addAttribute("COMjobs", DOUBLE, READ)
             self.blockdata.addAttribute("COMestates", DOUBLE, READ)
             self.blockdata.addAttribute("avSt_COM", DOUBLE, READ)
@@ -676,6 +707,21 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("COMAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("COMAeEIA", DOUBLE, READ)
             self.blockdata.addAttribute("COMAeTIA", DOUBLE, READ)
+            self.blockdata.addAttribute("Has_ORC", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCjobs", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCestates", DOUBLE, READ)
+            self.blockdata.addAttribute("avSt_ORC", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAfront", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAfrEIA", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAestate", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAeBldg", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCFloors", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAeLoad", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAeCPark", DOUBLE, READ)
+            self.blockdata.addAttribute("avLt_ORC", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAeLgrey", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAeEIA", DOUBLE, READ)
+            self.blockdata.addAttribute("ORCAeTIA", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_TIA", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_EIA", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_EIF", DOUBLE, READ)
@@ -695,6 +741,14 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("Blk_Com", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_Ind", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_PubIrr", DOUBLE, READ)
+            self.blockdata.addAttribute("HasL_RESSys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasL_HDRSys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasL_LISys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasL_HISys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasL_COMSys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasSSys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasNSys", DOUBLE, READ)
+            self.blockdata.addAttribute("HasBSys", DOUBLE, READ)
 
             views = []
             views.append(self.regiondata)
@@ -713,15 +767,13 @@ class UB_Techplan(Module):
             for r in self.regiondata:
                   mapdata = r
 
-            blockDict = {}
-
             self.blockdata.reset_reading()
             for block in self.blockdata:
                   curID = block.GetFieldAsInteger("BlockID")
                   print curID
-                  blockDict[curID] = {}
+                  self.blockDict[curID] = {}
                   for key in self.attnames:
-                        blockDict[curID][key] = block.GetFieldAsDouble(key)
+                        self.blockDict[curID][key] = block.GetFieldAsDouble(key)
             #End Result is a dictionary of dictionaries. Each key in the outer dictionary represents a BlocKID, each 
             #key in the inner dictionary represents the attributes of that block
             #---------------------------------------------------------------------------------------------------------
@@ -815,11 +867,11 @@ class UB_Techplan(Module):
 
 
             ###-------------------------------------------------------------------###
-            #---  SECTION A - RECALCULATE IMP AREA TO SERVE              ---#
+            #---  SECTION A1 - RECALCULATE IMP AREA TO SERVE                     ---#
             ###-------------------------------------------------------------------###
             #DETERMINE IMPERVIOUS AREAS TO MANAGE BASED ON LAND USES
-            for currentID in blockDict.keys():
-                  currentAttList = blockDict[currentID]
+            for currentID in self.blockDict.keys():
+                  currentAttList = self.blockDict[currentID]
                   if currentAttList["Status"] == 0:
                         continue
                   block_EIA = currentAttList["Blk_EIA"]
@@ -839,6 +891,14 @@ class UB_Techplan(Module):
 
                   currentAttList["Manage_EIA"] = block_EIA  #Add the "Manage_EIA" Attribute
 
+            ###-------------------------------------------------------------------###
+            #---  SECTION A2 - HASH TABLE OF UPSTREAM/DOWNSTREAM                 ---#
+            ###-------------------------------------------------------------------###
+            #SET UP A HASH TABLE FOR QUICKLY FINDING THE UPSTREAM STRING
+            for currentID in self.blockDict.keys():
+                  self.blockIDlist.append(int(self.blockDict[currentID]["BlockID"]))
+                  self.downIDlist.append(int(self.blockDict[currentID]["downID"]))
+                  
             ###-------------------------------------------------------------------###
             #---  SECTION B - RETROFIT ALGORITHM
             ###-------------------------------------------------------------------###
@@ -875,10 +935,10 @@ class UB_Techplan(Module):
 
                   #---- C.3 - BLOCK OPPORTUNITIES ASSESSMENT -------------------------
 
-            for i in blockDict.keys():
+            for i in self.blockDict.keys():
                   currentID = i
                   print "Currently on Block "+str(currentID)
-                  currentAttList = blockDict[i]
+                  currentAttList = self.blockDict[i]
                   if currentAttList["Status"] == 0:
                         print "Block not active in simulation"
                         continue
@@ -928,14 +988,6 @@ class UB_Techplan(Module):
 
                   inblock_options["BlockID"+str(currentID)] = self.constructInBlockOptions(currentAttList, lot_techRES, lot_techHDR, lot_techLI, lot_techHI, lot_techCOM, street_tech, neigh_tech)
         
-
-
-
-
-
-
-
-
 
       ######################################
       #--- FUNCTIONS FOR PRE-PROCESSING ---#
@@ -1725,17 +1777,26 @@ class UB_Techplan(Module):
             """Returns a vector containing all upstream block IDs, allows quick collation of 
             details.
             """
+            blockID = int(currentAttList["BlockID"])
+            print "Test: Block ID", blockID
+            streamIDs = []
+            curID = blockID
             if direction == "upstream":
-                  attname = "UpstrIDs"
+                  #Read downIDlist, grab BlockID, continue
+                  while curID != -1:
+                        try:
+                              streamIDs.append(self.blockIDlist[self.downIDlist.index(curID)])
+                              curID = self.blockIDlist[self.downIDlist.index(curID)]
+                        except ValueError:
+                              curID = -1
             elif direction == "downstream":
-                  attname = "DownstrIDs"
+                  while curID != -1:
+                        try: 
+                              streamIDs.append(self.downIDlist[self.blockIDlist.index(curID)])
+                              curID = self.downIDlist[self.blockIDlist.index(curID)]
+                        except ValueError:
+                              curID = -1
 
-            streamstring = currentAttList[attname]
-            streamIDs = streamstring.split(',')
-            streamIDs.remove('')
-
-            for i in range(len(streamIDs)):
-                  streamIDs[i] = int(streamIDs[i])
             if len(streamIDs) == 0:
                   return []
             else:
@@ -1760,7 +1821,7 @@ class UB_Techplan(Module):
             datavector = []
 
             for i in listIDs:
-                  blockFace = self.activesim.getAssetWithName("BlockID"+str(i))
+                  blockFace = self.blockDict[int(i)]
                   #blockFace = self.getBlockUUID(i, city)
                   if blockFace["Status"] == 0:
                         continue
@@ -2154,3 +2215,240 @@ class UB_Techplan(Module):
                         storageVol[harvestincr][supplyincr] = storeObj
             return storageVol
 
+      ###################################
+      #--- IN-BLOCK OPTIONS CREATION ---#
+      ###################################
+      def constructInBlockOptions(self, currentAttList, lot_techRES, lot_techHDR, lot_techLI, 
+                                    lot_techHI, lot_techCOM, street_tech, neigh_tech):
+            """Tries every combination of technology and narrows down the list of in-block
+            options based on MCA scoring and the Top Ranking Configuration selected by the
+            user. Returns an array of the top In-Block Options for piecing together with
+            sub-basin scale systems
+            Input Arguments:
+                  - currentAttList - current Block's Attribute list
+                  - lot_techRES - list of lot-scale technologies for residential land use
+                  - lot_techHDR - list of lot-scale technologies for HDR land use
+                  - lot_techLI - list of lot-scale technologies for LI land use
+                  - lot_techHI - list of lot-scale technologies for HI land use
+                  - lot_techCOM - list of lot-scale technologies for COM land use
+                  - street_tech - list of street scale technologies limited to RES land use
+                  - neigh_tech - list of neighbourhood scale technologies for block
+            """
+            allInBlockOptions = {}      #Initialize dictionary to hold all in-block options
+            currentID = int(currentAttList.getAttribute("BlockID"))
+            blockarea = pow(self.block_size,2)*currentAttList.getAttribute("Active")
+
+            for i in range(len(self.subbas_incr)):                #e.g. for [0, 0.25, 0.5, 0.75, 1.0]
+                  allInBlockOptions[self.subbas_incr[i]] = []       #Bins are: 0 to 25%, >25% to 50%, >50% to 75%, >75% to 100% of block treatment
+
+            #Obtain all variables needed to do area balance for Impervious Area Service
+            allotments = currentAttList.getAttribute("ResAllots")
+            estatesLI = currentAttList.getAttribute("LIestates")
+            estatesHI = currentAttList.getAttribute("HIestates")
+            estatesCOM = currentAttList.getAttribute("COMestates")
+            Aimplot = currentAttList.getAttribute("ResLotEIA")
+            AimpRes = allotments * Aimplot
+            AimpstRes = currentAttList.getAttribute("ResFrontT") - currentAttList.getAttribute("av_St_RES")
+            Aimphdr = currentAttList.getAttribute("HDR_EIA")    
+            AimpAeLI = currentAttList.getAttribute("LIAeEIA")
+            AimpLI = AimpAeLI * estatesLI
+            AimpAeHI = currentAttList.getAttribute("HIAeEIA")
+            AimpHI = AimpAeHI * estatesHI
+            AimpAeCOM = currentAttList.getAttribute("COMAeEIA")
+            AimpCOM = AimpAeCOM * estatesCOM
+
+            AblockEIA = currentAttList.getAttribute("Manage_EIA")          #Total block imp area to manage
+            blockDem = currentAttList.getAttribute("Blk_WD") - currentAttList.getAttribute("wd_Nres_IN")
+
+            if AblockEIA == 0 and blockDem == 0:
+                  return {}
+
+            #CREATE COMBINATIONS MATRIX FOR ALL LOT SCALE TECHNOLOGIES FIRST
+            #   for lot-scale technologies, these are pieced together based on the same increment
+            #   combinations are either 0 or the technologies that fit at that increment
+            lot_tech = []
+            for a in range(len(self.lot_incr)):     #lot_incr = [0, ....., 1.0]
+                  lot_deg = self.lot_incr[a]          #currently working on all lot-scale systems of increment lot_deg
+                  if lot_deg == 0:
+                        lot_tech.append([lot_deg,0,0,0,0,0])      #([deg, res, hdr, li, hi, com])
+                        continue
+                  for b in lot_techRES:
+                        for c in lot_techHDR:
+                              if c != 0 and c.getDesignIncrement() != lot_deg:
+                                    continue
+                              for d in lot_techLI:
+                                    if d != 0 and d.getDesignIncrement() != lot_deg:
+                                          continue
+                                    for e in lot_techHI:
+                                          if e != 0 and e.getDesignIncrement() != lot_deg:
+                                                continue
+                                          for f in lot_techCOM:
+                                                if f != 0 and f.getDesignIncrement() != lot_deg:
+                                                      continue
+                                                lot_tech.append([lot_deg, b, c, d, e, f])
+            if len(street_tech) == 0:
+                  street_tech.append(0)
+            if len(neigh_tech) == 0:
+                  neigh_tech.append(0)
+
+            #Combine all three scales together
+            combocheck =[]
+            for a in lot_tech:
+                  for b in street_tech:
+                        for c in neigh_tech:
+                              lot_deg = a[0]
+                              combo = [a[1], a[2], a[3], a[4], a[5], b, c]
+                              #if combo in combocheck:
+                              #    continue
+                              combocheck.append(combo)
+                              #self.notify("Combo: "+str(combo)+ " at lot deg: "+str(lot_deg))
+                              lotcounts = [int(lot_deg * allotments), int(1), int(estatesLI), int(estatesHI), int(estatesCOM),int(1),int(1)]
+
+                              if allotments != 0 and int(lot_deg*allotments) == 0:
+                                    continue        #the case of minimal allotments on-site where multiplying by lot-deg and truncation returns zero
+                                                      #this results in totalimpserved = 0, therefore model crashes on ZeroDivisionError
+
+                              #Check if street + lot systems exceed the requirements
+                              if a[1] != 0 and b != 0 and (a[1].getService("Qty")*allotments + b.getService("Qty")) > (AimpRes+AimpstRes):
+                                    continue    #Overtreatment occurring in residential district at the lot scale for "Qty"
+                              if a[1] != 0 and b != 0 and (a[1].getService("WQ")*allotments + b.getService("WQ")) > (AimpRes+AimpstRes):
+                                    continue    #Overtreatment occurring in residential district at the lot scale for "WQ"
+                              if combo.count(0) == 7: 
+                                    continue    #all options in the combo are zero, then we have no technologies, skip this as well
+
+                              servicematrix = self.getTotalComboService(combo, lotcounts)
+                              offsetmatrix = self.getTotalIAOofCombo(combo, lotcounts)
+                              #self.notify(servicematrix)
+
+                              if servicematrix[0] > AblockEIA or servicematrix[1] > AblockEIA:
+                                    #self.notify("Overtreatment on Qty or WQ side")
+                                    continue
+                              elif servicematrix[2] > blockDem: #CHANGE TO DEMAND!
+                                    #self.notify("Oversupply of demand")
+                                    continue
+                              else:
+                                    #self.notify("Strategy is fine")
+                                    #Create Block Strategy and put it into one of the subbas bins of allInBlockOptions
+                                    servicebin = self.identifyBin(servicematrix, AblockEIA, blockDem)
+                                    blockstrat = tt.BlockStrategy(combo, servicematrix, lotcounts, currentID, servicebin)
+                                    blockstrat.setIAO("Qty", offsetmatrix[0])
+                                    blockstrat.setIAO("WQ", offsetmatrix[1])
+
+                                    tt.CalculateMCATechScores(blockstrat,[AblockEIA, AblockEIA, blockDem],self.curscalepref, self.priorities, \
+                                                    self.mca_techlist, self.mca_tech, self.mca_env, self.mca_ecn, \
+                                                    self.mca_soc, self.iao_influence/100.0)
+
+                                    tt.CalculateMCAStratScore(blockstrat, [self.bottomlines_tech_w, self.bottomlines_env_w, \
+                                                               self.bottomlines_ecn_w, self.bottomlines_soc_w])
+                                    #Write to DB file
+                                    dbs = tt.createDataBaseString(blockstrat, AblockEIA)
+                                    self.dbcurs.execute("INSERT INTO blockstrats VALUES ("+str(dbs)+")")
+
+                              if len(allInBlockOptions[servicebin]) < 10:         #If there are less than ten options in each bin...
+                                    allInBlockOptions[servicebin].append(blockstrat)        #append the current strategy to the list of that bin
+                              else:               #Otherwise get bin's lowest score, compare and replace if necessary
+                                    lowestscore, lowestscoreindex = self.getServiceBinLowestScore(allInBlockOptions[servicebin])
+                                    if blockstrat.getTotalMCAscore() > lowestscore:
+                                          allInBlockOptions[servicebin].pop(lowestscoreindex)      #Pop the lowest score and replace
+                                          allInBlockOptions[servicebin].append(blockstrat)
+                                          #dbs = tt.createDataBaseString(blockstrat)
+                                    elif blockstrat.getTotalMCAscore() == lowestscore:
+                                          if random.random() > 0.5:   #if the scores are equal: fifty-fifty chance
+                                                allInBlockOptions[servicebin].pop(lowestscoreindex)      #Pop the lowest score and replace
+                                                allInBlockOptions[servicebin].append(blockstrat)
+                                    else:
+                                          blockstrat = 0      #set null reference
+
+            #Transfer all to database table
+            for key in allInBlockOptions.keys():
+                  for i in range(len(allInBlockOptions[key])):
+                        dbs = tt.createDataBaseString(allInBlockOptions[key][i], AblockEIA)
+                        self.dbcurs.execute("INSERT INTO blockstratstop VALUES ("+str(dbs)+")")
+            return allInBlockOptions
+
+      def getServiceBinLowestScore(self, binlist):
+            """Scans none list of BlockStrategies for the lowest MCA total score and returns
+            its value as well as the position in the list.
+            """
+            scorelist = []
+            for i in range(len(binlist)):
+                  scorelist.append(binlist[i].getTotalMCAscore())
+            lowscore = min(scorelist)
+            lowscoreindex = scorelist.index(lowscore)
+            return lowscore, lowscoreindex
+
+      def getTotalIAOofCombo(self, techarray, lotcounts):
+            """Tallies up the total impervious area offset for quantity and quality based on the WSUD objects' individual
+            offsets.
+            """
+            service_abbr = ["Qty", "WQ"]
+            offsetmatrix = [0, 0]
+            for j in range(len(service_abbr)):
+                  abbr = service_abbr[j]
+                  for tech in techarray:
+                        if tech == 0:
+                              continue
+                        if tech.getScale() == "L" and tech.getLandUse() == "RES":
+                              offsetmatrix[j] += tech.getIAO(abbr) * lotcounts[0]
+                        elif tech.getScale() == "L" and tech.getLandUse() == "LI":
+                              offsetmatrix[j] += tech.getIAO(abbr) * lotcounts[2]
+                        elif tech.getScale() == "L" and tech.getLandUse() == "HI":
+                              offsetmatrix[j] += tech.getIAO(abbr) * lotcounts[3]
+                        elif tech.getScale() == "L" and tech.getLandUse() == "COM":
+                              offsetmatrix[j] += tech.getIAO(abbr) * lotcounts[4]
+                        else:
+                              offsetmatrix[j] += tech.getIAO(abbr)
+            return offsetmatrix
+
+      def getTotalComboService(self, techarray, lotcounts):
+            """Retrieves all the impervious area served by an array of systems and returns
+            the value"""
+            service_abbr = ["Qty", "WQ", "Rec"]
+            service_booleans = [int(self.ration_runoff), int(self.ration_pollute), int(self.ration_harvest)]
+            servicematrix = [0,0,0]
+            for j in range(len(servicematrix)):
+                  if service_booleans[j] == 0:        #If not interested in that particular part
+                        servicematrix[j] = 0    #Set that service matrix entry to zero and continue
+                        continue
+                  abbr = service_abbr[j]
+                  for tech in techarray:
+                        if tech == 0:
+                              continue
+                        if tech.getScale() == "L" and tech.getLandUse() == "RES":
+                              servicematrix[j] += tech.getService(abbr) * lotcounts[0]
+                        elif tech.getScale() == "L" and tech.getLandUse() == "LI":
+                              servicematrix[j] += tech.getService(abbr) * lotcounts[2]
+                        elif tech.getScale() == "L" and tech.getLandUse() == "HI":
+                              servicematrix[j] += tech.getService(abbr) * lotcounts[3]
+                        elif tech.getScale() == "L" and tech.getLandUse() == "COM":
+                              servicematrix[j] += tech.getService(abbr) * lotcounts[4]
+                        else:
+                              servicematrix[j] += tech.getService(abbr)
+            return servicematrix
+
+      def identifyBin(self, servicematrix, AblockEIA, totdemand):
+            """Determines what bin to sort a particular service into, used when determining
+            which bin a BlockStrategy should go into"""
+            if AblockEIA == 0: AblockEIA = 0.0001    #Make infinitesimally small because the only case
+            if totdemand == 0: totdemand = 0.0001    #that results from this would be where service == 0
+
+            servicelevels = [servicematrix[0]/AblockEIA, servicematrix[1]/AblockEIA, servicematrix[2]/totdemand]
+            #print servicelevels
+            bracketwidth = 1.0/float(self.subbas_rigour)   #Used to bin the score within the bracket and penalise MCA score
+            blockstratservice = max(servicelevels)
+            #self.notify("Maximum service achieved is: "+str(blockstratservice)+" "+str(servicelevels))
+            for i in self.subbas_incr:      #[0(skip), 0.25, 0.5, 0.75, 1.0]
+                  #Identify Bin using 'less than' rule. Will skip the zero increment bin!
+                  #            if blockstratservice < i:   #bins will go from 0 to 0.25, 0.25, to 0.5 etc. (similar for other incr)
+                  #                return i
+                  #            else:
+                  #                continue
+
+                  #Identify Bin using Bracket
+                  if blockstratservice >= max((i-(bracketwidth/2)),0) and blockstratservice <= min((i+(bracketwidth/2)),1):
+                        #self.notify("Bin: "+str(i))
+                        return i
+                  else:
+                        continue
+                  #self.notify("Bin: "+str(max(self.subbas_incr)))
+            return max(self.subbas_incr)
