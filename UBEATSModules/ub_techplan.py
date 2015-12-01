@@ -1919,12 +1919,20 @@ class UB_Techplan(Module):
             curID = blockID
             if direction == "upstream":
                   #Read downIDlist, grab BlockID, continue
-                  while curID != -1:
-                        try:
-                              streamIDs.append(self.blockIDlist[self.downIDlist.index(curID)])
-                              curID = self.blockIDlist[self.downIDlist.index(curID)]
-                        except ValueError:
-                              curID = -1
+                  
+                  #First group of IDs
+                  indices = [id_index for id_index, x in enumerate(downIDlist) if x == curID]
+                  for id_index in indices:
+                        streamIDs.append(self.blockIDlist[id_index])
+            
+                  #Begin scanning the next IDs
+                  curindex = 0
+                  while curindex != len(streamIDs)-1:
+                        indices = [id_index for id_index, x in enumerate(downIDlist) if x == streamIDs[curindex]]
+                        for id_index in indices:
+                              streamIDs.append(self.blockIDlist[id_index])
+                        curindex += 1
+
             elif direction == "downstream":
                   while curID != -1:
                         try: 
@@ -2591,18 +2599,15 @@ class UB_Techplan(Module):
             outletID = 0
             for i in range(int(numblocks)):
                   currentID = i+1
-                  #currentAttList = self.getBlockUUID(currentID, city)
-                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentID))
-                  if currentAttList.getAttribute("BasinID") != currentBasinID:
+                  currentAttList = self.blockDict[currentID]
+                  if currentAttList["BasinID"] != currentBasinID:
                         continue
                   else:
-                        upstr = currentAttList.getAttribute("UpstrIDs")
-                        upstreamIDs = upstr.split(',')
-                        upstreamIDs.remove('')
+                        upstreamIDs = self.retrieveStreamBlockIDs(currentAttList, "upstream")
                         basinblocksortarray.append([len(upstreamIDs),currentID])
-                  if currentAttList.getAttribute("Outlet") == 1:
+                  if currentAttList["Outlet"] == 1:
                         outletID = currentID
-            basinblocksortarray.sort()      #sort ascending based on length of upstream string
+            basinblocksortarray.sort()                      #sort ascending based on length of upstream string
             for i in range(len(basinblocksortarray)):
                   basinblockIDs.append(basinblocksortarray[i][1])     #append just the ID of block
             return basinblockIDs, outletID
