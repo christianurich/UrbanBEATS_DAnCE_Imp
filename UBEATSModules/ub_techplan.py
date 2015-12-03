@@ -1921,7 +1921,7 @@ class UB_Techplan(Module):
                   #Read downIDlist, grab BlockID, continue
                   
                   #First group of IDs
-                  indices = [id_index for id_index, x in enumerate(downIDlist) if x == curID]
+                  indices = [id_index for id_index, x in enumerate(self.downIDlist) if x == curID]
                   for id_index in indices:
                         streamIDs.append(self.blockIDlist[id_index])
             
@@ -1965,11 +1965,11 @@ class UB_Techplan(Module):
             datavector = []
 
             for i in listIDs:
-                  blockFace = self.blockDict[int(i)]
+                  curAttList = self.blockDict[int(i)]
                   #blockFace = self.getBlockUUID(i, city)
-                  if blockFace["Status"] == 0:
+                  if curAttList["Status"] == 0:
                         continue
-                  datavector.append(blockFace[attribute])
+                  datavector.append(curAttList[attribute])
 
             if calc == 'sum':
                   output = sum(datavector)
@@ -2735,7 +2735,7 @@ class UB_Techplan(Module):
             #Loop across partakeID blocks (i.e. all blocks, which have a precinct tech)
             for i in range(len(partakeIDs)):
                   currentBlockID = partakeIDs[i]      #DENOTES CURRENT POSITION IN THE MAP
-                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentBlockID))
+                  currentAttList = self.blockDict[currentBlockID]
                   #print "Currently on BlockID: "+str(currentBlockID)
 
                   upstreamIDs = self.retrieveStreamBlockIDs(currentAttList, "upstream")
@@ -2743,24 +2743,24 @@ class UB_Techplan(Module):
                   #print "Upstream Blocks: "+str(upstreamIDs)+" downstream Blocks: "+str(downstreamIDs)
 
                   remainIDs = []    #All blocks upstream of current location that are unique to that location in the sub-basin
-                  for id in upstreamIDs:
-                        remainIDs.append(id)
+                  for b_id in upstreamIDs:
+                        remainIDs.append(b_id)
 
                   #(1) See if there are existing sub-basins inside the current sub-basin
                   subbasinIDs = []            #All blocks that are sub-basins within the subbasin denoted by the current location
-                  for id in partakeIDsTracker:
-                        if id in upstreamIDs:
-                              subbasinIDs.append(id)
+                  for b_id in partakeIDsTracker:
+                        if b_id in upstreamIDs:
+                              subbasinIDs.append(b_id)
                   #print "Subbasins upstream of current location "+str(subbasinIDs)
                   
                   for sbID in subbasinIDs:                  #then loop over the locations found and
                         partakeIDsTracker.remove(sbID)      #remove these from the tracker list so
                                                             #that they are not doubled up
                   
-                  for id in subbasinIDs:
-                        remainIDs.remove(id)            #remove the sub-basin ID's ID from remainIDs
+                  for b_id in subbasinIDs:
+                        remainIDs.remove(b_id)            #remove the sub-basin ID's ID from remainIDs
                         #upstrIDs = self.retrieveStreamBlockIDs(self.getBlockUUID(id, city), "upstream")
-                        upstrIDs = self.retrieveStreamBlockIDs(self.activesim.getAssetWithName("BlockID"+str(id)), "upstream")
+                        upstrIDs = self.retrieveStreamBlockIDs(self.blockDict[b_id], "upstream")
                         for upID in upstrIDs:   #Also remove all sub-basinID's upstream block IDs from
                               remainIDs.remove(upID)   #remain IDs, leaving ONLY Blocks local to currentBlockID
                   #print "Blocks local to current location: "+str(remainIDs)
@@ -2815,7 +2815,7 @@ class UB_Techplan(Module):
                         for sbID in subbasinIDs:
                               totSupply += subbasID_treatedREC[sbID]      #Get total supply of all combined upstream systems
                               #downIDs = self.retrieveStreamBlockIDs(self.getBlockUUID(sbID, city), "downstream")
-                              downIDs = self.retrieveStreamBlockIDs(self.activesim.getAssetWithName("BlockID"+str(sbID)), "downstream")
+                              downIDs = self.retrieveStreamBlockIDs(self.blockDict[sbID], "downstream")
                               downIDs.append(sbID)
                               for dID in downIDs:
                                     if dID not in downstreamIDs: downstreamIDs.append(dID)
@@ -2871,9 +2871,9 @@ class UB_Techplan(Module):
 
                         max_deg_matrix = [1]
                         #block_Aimp = self.getBlockUUID(rbID, city).getAttribute("Manage_EIA")
-                        block_Aimp = self.activesim.getAssetWithName("BlockID"+str(rbID)).getAttribute("Manage_EIA")
+                        block_Aimp = self.blockDict[rbID]["Manage_EIA"]
                         #block_Dem = self.getBlockUUID(rbID, city).getAttribute("Blk_WD") - self.getBlockUUID(rbID, city).getAttribute("wd_Nres_IN")
-                        block_Dem = self.activesim.getAssetWithName("BlockID"+str(rbID)).getAttribute("Blk_WD") - self.activesim.getAssetWithName("BlockID"+str(rbID)).getAttribute("wd_Nres_IN")
+                        block_Dem = self.blockDict[rbID]["Blk_WD"] - self.blockDict[rbID]["wd_Nres_IN"]
                         #print "Block details: "+str(block_Aimp)+" "+str(block_Dem)
                         if block_Aimp == 0:     #Impervious governs pretty much everything, if it is zero, don't even bother
                               continue
@@ -2954,109 +2954,108 @@ class UB_Techplan(Module):
             return performance
 
       def pickOption(self, blockID, max_degree, options_collection, totals, strattype):
-      """Picks and returns a random option based on the input impervious area and maximum
-      treatment degree. Can be used on either the in-block strategies or larger precinct 
-      strategies. If it cannot pick anything, it will return zeros all around.
-      """
-      bracketwidth = 1.0/float(self.subbas_rigour)    #Use bracket to determine optimum bin
+            """Picks and returns a random option based on the input impervious area and maximum
+            treatment degree. Can be used on either the in-block strategies or larger precinct 
+            strategies. If it cannot pick anything, it will return zeros all around."""
+            bracketwidth = 1.0/float(self.subbas_rigour)    #Use bracket to determine optimum bin
 
-      #print options_collection["BlockID"+str(blockID)]
-      if strattype == "BS":   #in-block strategy
-            options = []
+            #print options_collection["BlockID"+str(blockID)]
+            if strattype == "BS":   #in-block strategy
+                  options = []
 
-            #Continuous-based picking
-            for i in options_collection["BlockID"+str(blockID)].keys():
-                  if (i-bracketwidth/2) >= max_degree:                
-                        continue
-                  for j in options_collection["BlockID"+str(blockID)][i]:
-                        options.append(j)
+                  #Continuous-based picking
+                  for i in options_collection["BlockID"+str(blockID)].keys():
+                        if (i-bracketwidth/2) >= max_degree:                
+                              continue
+                        for j in options_collection["BlockID"+str(blockID)][i]:
+                              options.append(j)
 
-            #Bin-based picking
-            #            degs = []   #holds all the possible increments within max_degree
-            #            for i in options_collection["BlockID"+str(blockID)].keys():
-            #                if (i-bracketwidth/2) <= max_degree:                
-            #                    degs.append(i)  #add as a possible increment
-            #            if len(degs) != 0:
-            #                chosen_deg = degs[random.randint(0, len(degs)-1)]
-            #                for j in options_collection["BlockID"+str(blockID)][chosen_deg]:
-            #                    options.append(j)
+                  #Bin-based picking
+                  #            degs = []   #holds all the possible increments within max_degree
+                  #            for i in options_collection["BlockID"+str(blockID)].keys():
+                  #                if (i-bracketwidth/2) <= max_degree:                
+                  #                    degs.append(i)  #add as a possible increment
+                  #            if len(degs) != 0:
+                  #                chosen_deg = degs[random.randint(0, len(degs)-1)]
+                  #                for j in options_collection["BlockID"+str(blockID)][chosen_deg]:
+                  #                    options.append(j)
 
-            if len(options) == 0:
+                  if len(options) == 0:
+                        return 0, 0, 0, 0, 0, 0, 0
+                  scores = []
+                  for i in options:
+                        scores.append(i.getTotalMCAscore())
+
+                  #print "Scores: "+str(scores)
+
+                  #Pick Option
+                  scores = self.createCDF(scores)
+                  #print "Scores CDF: "+str(scores)
+                  choice = self.samplefromCDF(scores)
+                  #print choice
+                  chosen_obj = options[choice]
+
+                  #            AimpQTY = totals[0]
+                  #            AimpWQ = totals[1]
+                  #            DemREC = totals[2]
+                  #            treatedAimpQTY = chosen_deg * AimpQTY
+                  #            treatedAimpWQ = chosen_deg * AimpWQ
+                  #            treatedDemREC = chosen_deg * DemREC            
+                  treatedAimpQTY = chosen_obj.getService("Qty")
+                  iaoqty = chosen_obj.getIAO("Qty")
+                  treatedAimpWQ = chosen_obj.getService("WQ")
+                  iaowq = chosen_obj.getIAO("WQ")
+                  treatedDemREC = chosen_obj.getService("Rec")
+                  return chosen_obj.getBlockBin(), chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
+
+            elif strattype == "SB":  #sub-basin strategy
+                  #Continuous-based picking
+                  options = []
+                  for deg in self.subbas_incr:
+                        if(deg-bracketwidth/2) >= max_degree:
+                              continue
+                        for j in options_collection["BlockID"+str(blockID)][deg]:
+                              options.append(j)
+
+                  if len(options) != 0:
+                        chosen_obj = options[random.randint(0, len(options)-1)]
+
+                  #Bin-based picking
+                  #            AimpQTY = totals[0]
+                  #            AimpWQ = totals[1]
+                  #            DemREC = totals[2]
+                  #            indices = []
+                  #            for deg in self.subbas_incr:
+                  #                if (deg-bracketwidth/2) <= max_degree:
+                  #                    indices.append(deg)
+                  #            if len(indices) != 0:
+                  #                choice = random.randint(0, len(indices)-1)
+                  #                chosen_deg = self.subbas_incr[choice]
+                  #            else:
+                  #                return 0, 0, 0, 0, 0
+                  #            
+                  #            Nopt = len(options_collection["BlockID"+str(blockID)][chosen_deg])
+                  #            
+                  #            if Nopt != 0:
+                  #            #if chosen_deg != 0 and Nopt != 0:
+                  ##                treatedAimpQTY = chosen_deg * AimpQTY
+                  ##                treatedAimpWQ = chosen_deg * AimpWQ
+                  ##                treatedDemREC = chosen_deg * DemREC
+                  #                choice = random.randint(0, Nopt-1)
+                  #                chosen_obj = options_collection["BlockID"+str(blockID)][chosen_deg][choice]
+                  #                
+                  if chosen_obj == 0:
+                        return 0, 0, 0, 0, 0, 0, 0
+                  chosen_deg = chosen_obj.getDesignIncrement()
+                  treatedAimpQTY = chosen_obj.getService("Qty")
+                  iaoqty = chosen_obj.getIAO("Qty")
+                  treatedAimpWQ = chosen_obj.getService("WQ")
+                  iaowq = chosen_obj.getIAO("WQ")
+                  treatedDemREC = chosen_obj.getService("Rec")
+
+                  return chosen_deg, chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
+            else:
                   return 0, 0, 0, 0, 0, 0, 0
-            scores = []
-            for i in options:
-                  scores.append(i.getTotalMCAscore())
-
-            #print "Scores: "+str(scores)
-
-            #Pick Option
-            scores = self.createCDF(scores)
-            #print "Scores CDF: "+str(scores)
-            choice = self.samplefromCDF(scores)
-            #print choice
-            chosen_obj = options[choice]
-
-            #            AimpQTY = totals[0]
-            #            AimpWQ = totals[1]
-            #            DemREC = totals[2]
-            #            treatedAimpQTY = chosen_deg * AimpQTY
-            #            treatedAimpWQ = chosen_deg * AimpWQ
-            #            treatedDemREC = chosen_deg * DemREC            
-            treatedAimpQTY = chosen_obj.getService("Qty")
-            iaoqty = chosen_obj.getIAO("Qty")
-            treatedAimpWQ = chosen_obj.getService("WQ")
-            iaowq = chosen_obj.getIAO("WQ")
-            treatedDemREC = chosen_obj.getService("Rec")
-            return chosen_obj.getBlockBin(), chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
-
-      elif strattype == "SB":  #sub-basin strategy
-            #Continuous-based picking
-            options = []
-            for deg in self.subbas_incr:
-                  if(deg-bracketwidth/2) >= max_degree:
-                        continue
-                  for j in options_collection["BlockID"+str(blockID)][deg]:
-                        options.append(j)
-
-            if len(options) != 0:
-                  chosen_obj = options[random.randint(0, len(options)-1)]
-
-            #Bin-based picking
-            #            AimpQTY = totals[0]
-            #            AimpWQ = totals[1]
-            #            DemREC = totals[2]
-            #            indices = []
-            #            for deg in self.subbas_incr:
-            #                if (deg-bracketwidth/2) <= max_degree:
-            #                    indices.append(deg)
-            #            if len(indices) != 0:
-            #                choice = random.randint(0, len(indices)-1)
-            #                chosen_deg = self.subbas_incr[choice]
-            #            else:
-            #                return 0, 0, 0, 0, 0
-            #            
-            #            Nopt = len(options_collection["BlockID"+str(blockID)][chosen_deg])
-            #            
-            #            if Nopt != 0:
-            #            #if chosen_deg != 0 and Nopt != 0:
-            ##                treatedAimpQTY = chosen_deg * AimpQTY
-            ##                treatedAimpWQ = chosen_deg * AimpWQ
-            ##                treatedDemREC = chosen_deg * DemREC
-            #                choice = random.randint(0, Nopt-1)
-            #                chosen_obj = options_collection["BlockID"+str(blockID)][chosen_deg][choice]
-            #                
-            if chosen_obj == 0:
-                  return 0, 0, 0, 0, 0, 0, 0
-            chosen_deg = chosen_obj.getDesignIncrement()
-            treatedAimpQTY = chosen_obj.getService("Qty")
-            iaoqty = chosen_obj.getIAO("Qty")
-            treatedAimpWQ = chosen_obj.getService("WQ")
-            iaowq = chosen_obj.getIAO("WQ")
-            treatedDemREC = chosen_obj.getService("Rec")
-
-            return chosen_deg, chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
-      else:
-            return 0, 0, 0, 0, 0, 0, 0
 
       def createCDF(self, score_matrix):
             """Creates a cumulative distribution for an input list of values by normalizing
