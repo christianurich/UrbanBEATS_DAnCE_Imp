@@ -1103,7 +1103,7 @@ class UB_Techplan(Module):
                               continue
                         else:
                               acceptable_options.append(basin_strategies[j])
-                  #self.notify(acceptable_options)
+                  #print acceptable_options
                   if self.ranktype == "RK":
                         acceptable_options = acceptable_options[0:int(self.topranklimit)]
                   elif self.ranktype == "CI":
@@ -1135,7 +1135,7 @@ class UB_Techplan(Module):
                               #Repeat for as many options as requested
 
                   #Write WSUD strategy attributes to output vector for that block
-                  self.notify(final_selection)
+                  print final_selection
                   if len(final_selection) == 0:
                         self.transferExistingSystemsToOutput(1, 0)
                         #If there are no additional plans, just tranfer systems across, only one output as StrategyID1
@@ -1384,16 +1384,16 @@ class UB_Techplan(Module):
                         currentAttList["Has"+str(luc_code)+"Sys"] = 0
                   else:
                         currentAttList["Has"+str(luc_code)+"Sys"] = 1  #mark the system as having been taken
-                        print luc_code+" Location: "+str(sys_descr["Location"]))
+                        print luc_code+" Location: "+str(sys_descr["Location"])
                         Aimplot = currentAttList["ResLotEIA"]
-                  if luc_code == "L_RES":
-                        imptreated = min(self.retrieveNewAimpTreated(ID, luc_code, sys_descr), Aimplot)
-                  else:
-                        imptreated = self.retrieveNewAimpTreated(ID, luc_code, sys_descr)
-                  inblock_imp_treated += imptreated * sys_descr["GoalQty"]
-                  sys_descr["ImpT"] = imptreated   #UNIT IMPERVIOUSNESS TREATED
-                  sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
-                  #Do Nothing Scenario: ImpT changes and CurImpT changes, but Status remains 1
+                        if luc_code == "L_RES":
+                              imptreated = min(self.retrieveNewAimpTreated(ID, luc_code, sys_descr), Aimplot)
+                        else:
+                              imptreated = self.retrieveNewAimpTreated(ID, luc_code, sys_descr)
+                        inblock_imp_treated += imptreated * sys_descr["GoalQty"]
+                        sys_descr["ImpT"] = imptreated   #UNIT IMPERVIOUSNESS TREATED
+                        sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
+                        #Do Nothing Scenario: ImpT changes and CurImpT changes, but Status remains 1
 
             currentAttList["ServWQ"] = inblock_imp_treated
             inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
@@ -1628,7 +1628,7 @@ class UB_Techplan(Module):
                         #If systems have disappeared the final quantity of lot implementation (i.e. goalqty) will drop
                         if luc_code == "L_RES":
                               sys_descr = self.updateForBuildingStockRenewal(currentAttList, sys_descr)
-                              print "After: "+str(sys_descr["GoalQty"])
+                        print "After: "+str(sys_descr["GoalQty"])
                   else:
                         go_retrofit = 0
 
@@ -1941,26 +1941,26 @@ class UB_Techplan(Module):
             - scale: the letter denoting system scale
             - originalAimpTreated: the old impervious area the system was meant to treat
             """
-            type = sys_descr["Type"]
+            wtype = sys_descr["Type"]
 
             #TO BE CHANGED LATER ON, BUT FOR NOW WE ASSUME THIS IS THE SAME PATH
-            dcvpath = self.getDCVPath(type)
+            dcvpath = self.getDCVPath(wtype)
             #GET THE DCV FILENAME
             #dcvpath = self.findDCVpath(type, sys_descr)
 
             #Some additional arguments for the design function
-            maxsize = eval("self."+str(type)+"maxsize")                     #FUTURE >>>>>> MULTI-oBJECTIVE DESIGN
-            minsize = eval("self."+str(type)+"minsize")
+            maxsize = eval("self."+str(wtype)+"maxsize")                     #FUTURE >>>>>> MULTI-oBJECTIVE DESIGN
+            minsize = eval("self."+str(wtype)+"minsize")
             soilK = currentAttList["Soil_k"]
             systemK = sys_descr["Exfil"]
 
             #Current targets
             targets = self.targetsvector
-            tech_applications = self.getTechnologyApplications(type)
+            tech_applications = self.getTechnologyApplications(wtype)
             purpose = [0, tech_applications[1], 0]
 
             #Call the design function using eval, due to different system Types
-            newdesign = eval('td.design_'+str(type)+'('+str(originalAimpTreated)+',"'+str(dcvpath)+'",'+str(self.targetsvector)+','+str(purpose)+','+str(soilK)+','+str(systemK)+','+str(minsize)+','+str(maxsize)+')')    
+            newdesign = eval('td.design_'+str(wtype)+'('+str(originalAimpTreated)+',"'+str(dcvpath)+'",'+str(self.targetsvector)+','+str(purpose)+','+str(soilK)+','+str(systemK)+','+str(minsize)+','+str(maxsize)+')')    
 
             Anewsystem = newdesign[0]
             newEAFactor = newdesign[1]
@@ -1987,10 +1987,10 @@ class UB_Techplan(Module):
             evenly distribute this across those that have lot system and those that don't
             we therefore end up calculate how many systems lost as lot-perc * how many in place
             """
-            self.notify("YEARS")
-            self.notify(str(self.currentyear)+" "+str(self.prevyear)+" "+str(self.renewal_lot_years))
+            print "YEARS"
+            print str(self.currentyear)+" "+str(self.prevyear)+" "+str(self.renewal_lot_years)
             cycles = (float(self.currentyear) - float(self.prevyear)) // float(self.renewal_lot_years)
-            self.notify("Cycles"+str( cycles ))
+            print "Cycles"+str( cycles )
             currentQty = float(sys_descr["Qty"])
             num_lots_lost = currentQty*self.renewal_lot_perc/100*cycles
             newQty = currentQty - num_lots_lost
@@ -3119,7 +3119,7 @@ class UB_Techplan(Module):
                               #if combo in combocheck:
                               #    continue
                               combocheck.append(combo)
-                              #self.notify("Combo: "+str(combo)+ " at lot deg: "+str(lot_deg))
+                              #print "Combo: "+str(combo)+ " at lot deg: "+str(lot_deg)
                               lotcounts = [int(lot_deg * allotments), int(1), int(estatesLI), int(estatesHI), int(estatesCOM),int(1),int(1)]
 
                               if allotments != 0 and int(lot_deg*allotments) == 0:
@@ -3136,16 +3136,16 @@ class UB_Techplan(Module):
 
                               servicematrix = self.getTotalComboService(combo, lotcounts)
                               offsetmatrix = self.getTotalIAOofCombo(combo, lotcounts)
-                              #self.notify(servicematrix)
+                              #print servicematrix
 
                               if servicematrix[0] > AblockEIA or servicematrix[1] > AblockEIA:
-                                    #self.notify("Overtreatment on Qty or WQ side")
+                                    #print "Overtreatment on Qty or WQ side"
                                     continue
                               elif servicematrix[2] > blockDem: #CHANGE TO DEMAND!
-                                    #self.notify("Oversupply of demand")
+                                    #print "Oversupply of demand"
                                     continue
                               else:
-                                    #self.notify("Strategy is fine")
+                                    #print "Strategy is fine"
                                     #Create Block Strategy and put it into one of the subbas bins of allInBlockOptions
                                     servicebin = self.identifyBin(servicematrix, AblockEIA, blockDem)
                                     blockstrat = tt.BlockStrategy(combo, servicematrix, lotcounts, currentID, servicebin)
@@ -3245,7 +3245,7 @@ class UB_Techplan(Module):
             #print servicelevels
             bracketwidth = 1.0/float(self.subbas_rigour)   #Used to bin the score within the bracket and penalise MCA score
             blockstratservice = max(servicelevels)
-            #self.notify("Maximum service achieved is: "+str(blockstratservice)+" "+str(servicelevels))
+            #print "Maximum service achieved is: "+str(blockstratservice)+" "+str(servicelevels)
             for i in self.subbas_incr:      #[0(skip), 0.25, 0.5, 0.75, 1.0]
                   #Identify Bin using 'less than' rule. Will skip the zero increment bin!
                   #            if blockstratservice < i:   #bins will go from 0 to 0.25, 0.25, to 0.5 etc. (similar for other incr)
@@ -3255,11 +3255,11 @@ class UB_Techplan(Module):
 
                   #Identify Bin using Bracket
                   if blockstratservice >= max((i-(bracketwidth/2)),0) and blockstratservice <= min((i+(bracketwidth/2)),1):
-                        #self.notify("Bin: "+str(i))
+                        #print "Bin: "+str(i)
                         return i
                   else:
                         continue
-                  #self.notify("Bin: "+str(max(self.subbas_incr)))
+                  #print "Bin: "+str(max(self.subbas_incr))
             return max(self.subbas_incr)
 
       ######################################
@@ -3341,8 +3341,7 @@ class UB_Techplan(Module):
             REC = recycling
             - basinBlockIDs: array containing all IDs within the current basin
             """
-            #self.notify(basinBlockIDs)
-            #self.notify(type)
+            #print basinBlockIDs
             # print "Basin Blocks", basinBlockIDs
             # print servtype
 
@@ -3539,7 +3538,7 @@ class UB_Techplan(Module):
                   #(4) PICK AN IN-BLOCK STRATEGY IF IT IS HAS BEEN CHOSEN
                   for rbID in remainIDs:
                         if rbID not in inblocks_chosenIDs:        #If the Block ID hasn't been chosen,
-                              #self.notify("rbID not in inblocks_chosenIDs")
+                              #print "rbID not in inblocks_chosenIDs"
                               continue                            #then skip to next one, no point otherwise
 
                         max_deg_matrix = [1]
