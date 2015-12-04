@@ -908,8 +908,41 @@ class UB_Techplan(Module):
             #---  SECTION B - RETROFIT ALGORITHM
             ###-------------------------------------------------------------------###
 
-            #COMING LATER
+            #totsystems = self.activesim.getAssetWithName("SysPrevGlobal").getAttribute("TotalSystems")
+            totsystems = 0
 
+            print "Total Systems in Map: "+str(totsystems)
+
+            sysIDs = self.activesim.getAssetsWithIdentifier("SysPrevID")
+            
+            #Grab the list of systems and sort them based on location into a dictionary
+            system_list = {}        #Dictionary
+            for i in range(int(blocks_num)):
+                  system_list[i+1] = []
+            for i in range(len(sysIDs)):
+                  #curSys = city.getComponent(sysuuids[i])
+                  curSys = sysIDs[i]
+                  locate = int(curSys["Location"])
+                  system_list[locate].append(curSys)  #Block ID [5], [curSys, curSys, curSys]
+
+            #Do the retrofitting
+            for i in range(int(blocks_num)):
+                  currentID = i+1
+                  #currentAttList = self.getBlockUUID(currentID, city) #QUIT CONDITION #1 - status=0
+                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentID))
+                  if currentAttList["Status"] == 0:
+                        continue
+
+                  sys_implement = system_list[currentID]
+                  if len(sys_implement) == 0:
+                        continue
+
+                  if self.retrofit_scenario == "N":
+                        self.retrofit_DoNothing(currentID, sys_implement)
+                  elif self.retrofit_scenario == "R":
+                        self.retrofit_WithRenewal(currentID, sys_implement)
+                  elif self.retrofit_scenario == "F":
+                        self.retrofit_Forced(currentID, sys_implement)
 
             ###-------------------------------------------------------------------###
             #--- SECTION C - OPPORTUNITIES MAPPING OF INDIVIDUAL TECHS
@@ -1002,7 +1035,7 @@ class UB_Techplan(Module):
                   currentBasinID = i+1
                   print "Currently on Basin ID"+str(currentBasinID)
 
-                  basinBlockIDs, outletID = self.getBasinBlockIDs(currentBasinID, blocks_num)
+                  basinBlockIDs, outletID = self.getBasinBlockIDs(currentBasinID)
                   print "basinBlockIDs "+str(basinBlockIDs)+" "+str(outletID)
 
                   dP_QTY, basinRemainQTY, basinTreatedQTY, basinEIA = self.calculateRemainingService("QTY", basinBlockIDs)
@@ -1029,7 +1062,6 @@ class UB_Techplan(Module):
                         iterations = self.maxMCiterations/10        #If only one block in basin, do different/smaller number of iterations
                   
                   #Begin Monte Carlo
-                  
                   basin_strategies = []
                   for iteration in range(iterations):   #1000 monte carlo simulations
                         print "Current Iteration No. "+str(iteration+1)
@@ -1330,6 +1362,650 @@ class UB_Techplan(Module):
       ################################
       #--- RETROFIT SUB-FUNCTIONS ---#
       ################################
+
+      def retrofit_DoNothing(self, ID, sys_implement):
+            """Implements the "DO NOTHING" Retrofit Scenario across the entire map Do Nothing:
+            Technologies already in place will be left as is
+            - The impervious area they already treat will be removed from the outstanding impervious 
+            area to be treated
+            - The Block will be marked at the corresponding scale as "occupied" so that techopp 
+            functions cannot place anything there ('no space case')
+            """
+            print "Block: "+str(ID)
+            print sys_implement     #[curSys, curSys, curSys, ...]
+
+            #currentAttList = self.getBlockUUID(ID,city)
+            currentAttList = self.blockDict[ID]
+            inblock_imp_treated = 0 #Initialize to keep track of treated in-block imperviousness
+
+            #LOT, STREET, NEIGH Systems
+            for luc_code in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]:
+                  sys_descr = self.locatePlannedSystems(sys_implement, luc_code)
+                  if sys_descr == None:       #None found for that particular land use
+                        inblock_imp_treated += 0
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 0
+                  else:
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 1  #mark the system as having been taken
+                        print luc_code+" Location: "+str(sys_descr["Location"]))
+                        Aimplot = currentAttList["ResLotEIA"]
+                  if luc_code == "L_RES":
+                        imptreated = min(self.retrieveNewAimpTreated(ID, luc_code, sys_descr), Aimplot)
+                  else:
+                        imptreated = self.retrieveNewAimpTreated(ID, luc_code, sys_descr)
+                  inblock_imp_treated += imptreated * sys_descr["GoalQty"]
+                  sys_descr["ImpT"] = imptreated   #UNIT IMPERVIOUSNESS TREATED
+                  sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
+                  #Do Nothing Scenario: ImpT changes and CurImpT changes, but Status remains 1
+
+            currentAttList["ServWQ"] = inblock_imp_treated
+            inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
+            currentAttList["DeficitWQ"] = inblock_impdeficit
+            print "Deficit Area still to treat inblock: "+str(inblock_impdeficit)
+
+            #Calculate the maximum degree of lot implementation allowed (no. of houses)
+            allotments = currentAttList["ResAllots"]
+            Aimplot = currentAttList["ResLotEIA"]
+            print "Allotments = "+str(allotments)+" of each "+str(Aimplot)+" sqm impervious"
+            max_houses = min((inblock_impdeficit/Aimplot)/allotments, 1)
+            print "A Lot Strategy in this Block would permit a maximum implementation in: "+str(max_houses*100)+"% of houses"
+            currentAttList["MaxLotDeg"] = max_houses
+
+            #PRECINCT SYSTEMS
+            sys_descr = self.locatePlannedSystems(sys_implement, "B")
+            if sys_descr == None:
+                  currentAttList["HasBSys"] = 0
+                  currentAttList["ServUpWQ"] = 0
+            else:
+                  currentAttList["HasBSys"] = 1
+                  subbasimptreated = self.retrieveNewAimpTreated(ID, "B", sys_descr)
+                  print "Subbasin Location: "+str(sys_descr["Location"])
+                  currentAttList["ServUpWQ"] = subbasimptreated
+                  sys_descr["ImpT"] = subbasimptreated
+                  sys_descr["CurImpT"] = subbasimptreated * sys_descr["Qty"]
+            return True
+          
+    
+      def retrofit_Forced(self, ID, sys_implement):
+            """Implements the "FORCED" Retrofit Scenario across the entire map
+            Forced: Technologies at the checked scales are retrofitted depending on the three
+            options available: keep, upgrade, decommission
+            - See comments under "With Renewal" scenario for further details
+            """
+            print "Block: "+str(ID)
+            print sys_implement
+
+            #currentAttList = self.getBlockUUID(ID,city)
+            currentAttList = self.blockDict[ID]
+            inblock_imp_treated = 0 #Initialize to keep track of treated in-block imperviousness
+
+            #LOT, STREET & NEIGH
+            for luc_code in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]:
+                  sys_descr = self.locatePlannedSystems(sys_implement, luc_code)
+
+                  if sys_descr == None: #Skip condition, no system at the particular scale/luc-code
+                        inblock_imp_treated += 0
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 0
+                        continue
+
+                  oldImp = sys_descr["ImpT"]
+                  decision, newImpT = self.dealWithSystem(currentAttList, sys_descr, luc_code,)
+
+                  #CONDITIONS THAT WILL FORCE A DECISION == 1
+                  if luc_code in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM"]:
+                        decision = 1 #YOU CANNOT FORCE RETROFIT ON LOT, SO KEEP THE SYSTEMS
+                  if luc_code == "S" and self.force_street == 0: #if we do not force retrofit on neighbourhood, just keep the system
+                        decision = 1
+                  if luc_code == "N" and self.force_neigh == 0: #if we do not force retrofit on neighbourhood, just keep the system
+                        decision = 1
+
+                  if decision == 1:   #KEEP SYSTEM
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                        Aimplot = currentAttList["ResLotEIA"]
+                        if luc_code == "L_RES":
+                              imptreated = min(newImpT, Aimplot)
+                        else:
+                              imptreated = newImpT
+                        inblock_imp_treated += imptreated
+                        sys_descr["ImpT"] = imptreated
+                        sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
+
+                  elif decision == 2: #RENEWAL
+                        print "Renewing the System - Redesigning and Assessing Space Requirements"
+                        newAsys, newEAFact = self.redesignSystem(currentAttList, sys_descr, luc_code, oldImp) #get new system size & EA
+
+                        #Get available space - depends on scale/luc-code
+                        if luc_code == "S":
+                        avlSpace = currentAttList["avSt_RES"]
+                        elif luc_code == "N":
+                              if sys_descr["Type"] in ["BF", "WSUR", "PB","RT", "SW", "IS"]: #CHECK WHAT SVU Land use area is available
+                                    svu_space = currentAttList["SVU_avSW"] + currentAttList["SVU_avWS"]
+                              elif sys_descr["Type"] in ["GT"]:
+                                    svu_space = currentAttList["SVU_avWW"]
+                              else:
+                                    svu_space = 0
+                              avlSpace = currentAttList["PG_av"] + currentAttList["REF_av"] + svu_space
+
+                        if newAsys > avlSpace and self.renewal_alternative == "K": #if system does not fit and alternative is 'Keep'
+                              print "Cannot fit new system design, keeping old design instead"
+                              currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                              inblock_imp_treated += newImpT
+                              sys_descr["ImpT"] = newImpT
+                              sys_descr["CurImpT"] = newImpT * sys_descr["Qty"]
+                        elif newAsys > avlSpace and self.renewal_alternative == "D": #if system does not fit and alternative is 'Decommission'
+                              print "Cannot fit new system design, decommissioning instead"
+                              inblock_imp_treated += 0 #quite self-explanatory but is added here for clarity
+                              currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                              sys_implement.remove(sys_descr)
+                              >>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                        else: #otherwise it'll fit, transfer new information
+                              print "New System Upgrades fit, transferring this information to output"
+                              currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                              self.defineUpgradedSystemAttributes(sys_descr, newAsys, newEAFact, oldImp)
+                              inblock_imp_treated += oldImp
+
+                  elif decision == 3: #DECOMMISSIONING
+                        print "Decommissioning the system"
+                        inblock_imp_treated += 0 #quite self-explanatory but is added here for clarity
+                        #remove all attributes, wipe the attributes entry in techconfigout with a blank attribute object
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 0 #Remove system placeholder
+                        sys_implement.remove(sys_descr)
+                        #city.removeComponent(sys_descr.getUUID())
+                        self.activesim.removeAssetByName("SysPrevID"+str(sys_descr.getAttribute("SysID")))
+
+            currentAttList["ServWQ"] = inblock_imp_treated
+            inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
+            currentAttList["DeficitIA"] = inblock_impdeficit
+
+            allotments = currentAttList["ResAllots"]
+            Aimplot = currentAttList["ResLotEIA"]
+            print "Allotments = "+str(allotments)+" of each "+str(Aimplot)+" sqm impervious"
+            max_houses = min((inblock_impdeficit/Aimplot)/allotments, 1)
+            print "A Lot Strategy in this Block would permit a maximum implementation in: "+str(max_houses*100)+"% of houses"
+            currentAttList["MaxLotDeg"] = max_houses
+
+            #SUBBASIN
+            sys_descr = self.locatePlannedSystems(sys_implement, "B")
+            if sys_descr == None:
+                  currentAttList["HasBSys"] = 0
+            else:
+                  oldImp = sys_descr["ImpT"]
+                  decision, newImpT = self.dealWithSystem(currentAttList, sys_descr, "B")
+                  if self.force_prec == 0: #if we do not force retrofit on precinct, just keep the system
+                        decision = 1
+
+                  if decision == 1: #KEEP
+                        print "Keeping the System"
+                        currentAttList["HasBSys"] = 1
+                        currentAttList["ServUpWQ"] = newImpT
+                        sys_descr["ImpT"] = newImpT
+                        sys_descr["CurImpT"] = newImpT * sys_descr["Qty"]
+
+                  elif decision == 2: #RENEWAL
+                        print "Renewing the System - Redesigning and Assessing Space Requirements"
+                        newAsys, newEAFact = self.redesignSystem(currentAttList, sys_descr, "B", oldImp) #get new system size & EA
+                        if sys_descr["Type"] in ["BF", "WSUR", "PB","RT", "SW", "IS"]: #CHECK WHAT SVU Land use area is available
+                              svu_space = currentAttList["SVU_avSW"] + currentAttList["SVU_avWS"]
+                        elif sys_descr["Type"] in ["GT"]:
+                              svu_space = currentAttList["SVU_avWW"]
+                        else:
+                              svu_space = 0
+                        avlSpace = currentAttList["PG_av"] + currentAttList["REF_av"] + svu_space
+                        if newAsys > avlSpace and self.renewal_alternative == "K": #if system does not fit and alternative is 'Keep'
+                              print "Cannot fit new system design, keeping old design instead"
+                              currentAttList["HasBSys"] = 1
+                              currentAttList["ServUpWQ"] = newImpT
+                              sys_descr["ImpT"] = newImpT
+                              sys_descr["CurImpT"] = newImpT * sys_descr["Qty"]
+                        elif newAsys > avlSpace and self.renewal_alternative == "D": #if system does not fit and alternative is 'Decommission'
+                              print "Cannot fit new system design, decommissioning instead"
+                              currentAttList["ServUpWQ"] = 0
+                              currentAttList["HasBSys"] = 0       #Remove system placeholder
+                              sys_implement.remove(sys_descr)
+                              #city.removeComponent(sys_descr.getUUID())
+                              self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                        else: #otherwise it'll fit, transfer new information
+                              print "New System Upgrades fit, transferring this information to output"
+                              currentAttList["HasBSys"] = 1
+                              self.defineUpgradedSystemAttributes(sys_descr, newAsys, newEAFact, oldImp)
+                              currentAttList["ServUpWQ"] = oldImp        #OLD IMP BECAUSE THE REDESIGNED SYSTEM IS NOW LARGER
+                                                                                    #AND BETTER TO HANDLE SAME IMP AREA AS BEFORE!
+                  elif decision == 3: #DECOMMISSIONING
+                        print "Decommissioning the system"
+                        currentAttList["ServUpWQ"] = 0
+                        #remove all attributes, wipe the attributes entry in techconfigout with a blank attribute object
+                        currentAttList["HasSubbasS"] = 0
+                        sys_implement.remove(sys_descr)
+                        #city.removeComponent(sys_descr.getUUID())
+                        >>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+            return True
+
+
+      def retrofit_WithRenewal(self, ID, sys_implement):
+            """Implements the "WITH RENEWAL" Retrofit Scenario across the entire map
+            With Renewal: Technologies at different scales are selected for retrofitting
+            depending on the block's age and renewal cycles configured by the user
+            - Technologies are first considered for keeping, upgrading or decommissioning
+            - Keep: impervious area they already treat will be removed from the outstanding
+            impervious area to be treated and that scale in said Block marked as 'taken'
+            - Upgrade: technology targets will be looked at and compared, the upgraded technology
+            is assessed and then implemented. Same procedures as for Keep are subsequently
+            carried out with the new design
+            - Decommission: technology is removed from the area, impervious area is freed up
+            scale in said block is marked as 'available'"""
+
+            time_passed = self.currentyear - self.prevyear
+
+            print "Block: "+str(ID)
+            print sys_implement
+
+            #currentAttList = self.getBlockUUID(ID,city)
+            currentAttList = self.activesim.getAssetWithName("BlockID"+str(ID))
+            inblock_imp_treated = 0
+
+            if self.renewal_cycle_def == 0:
+                  self.retrofit_DoNothing(ID, sys_implement) #if no renewal cycle was defined
+                  return True #go through the Do Nothing Loop instead
+
+            #LOT, STREET, NEIGH
+            for luc_code in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]:
+                  sys_descr = self.locatePlannedSystems(sys_implement, luc_code)
+                  if sys_descr == None:
+                        inblock_imp_treated += 0
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 0
+                        continue
+
+                  #Get Renewal Cycle Variable
+                  if luc_code in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM"]:
+                        renewalyears = self.renewal_lot_years
+                  elif luc_code == "S":
+                        renewalyears = self.renewal_street_years
+                  elif luc_code == "N":
+                        renewalyears = self.renewal_neigh_years
+
+                  #DO SOMETHING TO DETERMINE IF YES/NO RETROFIT, then check the decision
+                  if time_passed - (time_passed // renewalyears)*renewalyears == 0:
+                        go_retrofit = 1 #then it's time for renewal
+                        print "Before: "+str(sys_descr["GoalQty"])
+                        #modify the current sys_descr attribute to take into account lot systems that have disappeared.
+                        #If systems have disappeared the final quantity of lot implementation (i.e. goalqty) will drop
+                        if luc_code == "L_RES":
+                              sys_descr = self.updateForBuildingStockRenewal(currentAttList, sys_descr)
+                              print "After: "+str(sys_descr["GoalQty"])
+                  else:
+                        go_retrofit = 0
+
+                  #NOW DETERMINE IF ARE RETROFITTING OR NOT: IF NOT READY FOR RETROFIT, KEEP, ELSE GO INTO CYCLE
+                  oldImp = sys_descr["ImpT"] #Old ImpT using the old GoalQty value
+                  decision, newImpT = self.dealWithSystem(currentAttList, sys_descr, luc_code) #gets the new ImpT using new GoalQty value (if it changed)
+                  if go_retrofit == 0:        #If the decision is to NOT retrofit yet, then KEEP the system
+                        decision = 1
+
+                  if decision == 1: #KEEP
+                        print "Keeping the System"
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                        Aimplot = currentAttList["ResLotEIA"]
+                        if luc_code == "L_RES":
+                              imptreated = min(newImpT, Aimplot)
+                        else:
+                              imptreated = newImpT
+                        inblock_imp_treated += imptreated
+                        sys_descr["ImpT"] = imptreated
+                        sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
+
+                  elif decision == 2: #RENEWAL
+                        if luc_code in ["L_RES", "L_HDR", "L_COM", "L_LI", "L_HI"]:
+                              print "Lot-scale systems will not allow renewal, instead the systems will be kept as is until plan is abandoned"
+                              currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                              Aimplot = currentAttList["ResLotEIA"]
+                              if luc_code == "L_RES":
+                                    imptreated = min(newImpT, Aimplot)
+                              else:
+                                    imptreated = newImpT
+                              inblock_imp_treated += imptreated
+                              sys_descr["ImpT"] = imptreated
+                              sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
+                              #FUTURE DYNAMICS TO BE INTRODUCED
+                        else:
+                              print "Renewing the System - Redesigning and Assessing Space Requirements"
+                              newAsys, newEAFact = self.redesignSystem(currentAttList, sys_descr, luc_code, oldImp) #get new system size & EA
+
+                              #Get available space - depends on scale/luc-code
+                              if luc_code == "S":
+                                    avlSpace = currentAttList["avSt_RES"]
+                              elif luc_code == "N":
+                                    if sys_descr["Type"] in ["BF", "WSUR", "PB","RT", "SW", "IS"]: #CHECK WHAT SVU Land use area is available
+                                          svu_space = currentAttList["SVU_avSW"] + currentAttList["SVU_avWS"]
+                                    elif sys_descr["Type"] in ["GT"]:
+                                          svu_space = currentAttList["SVU_avWW"]
+                                    else:
+                                          svu_space = 0
+                                    avlSpace = currentAttList["PG_av"] + currentAttList["REF_av"] + svu_space
+
+                              if newAsys > avlSpace and self.renewal_alternative == "K": #if system does not fit and alternative is 'Keep'
+                                    print "Cannot fit new system design, keeping old design instead"
+                                    currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                                    inblock_imp_treated += newImpT
+                                    sys_descr["ImpT"] = newImpT
+                                    sys_descr["CurImpT"] = newImpT * sys_descr["Qty"]
+                              elif newAsys > avlSpace and self.renewal_alternative == "D": #if system does not fit and alternative is 'Decommission'
+                                    print "Cannot fit new system design, decommissioning instead"
+                                    inblock_imp_treated += 0 #quite self-explanatory but is added here for clarity
+                                    currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                                    sys_implement.remove(sys_descr)
+                                    #city.removeComponent(sys_descr.getUUID())
+                                    self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                              else: #otherwise it'll fit, transfer new information
+                                    print "New System Upgrades fit, transferring this information to output"
+                                    currentAttList["Has"+str(luc_code)+"Sys"] = 1
+                                    self.defineUpgradedSystemAttributes(sys_descr, newAsys, newEAFact, oldImp)
+                                    inblock_imp_treated += oldImp
+
+                  elif decision == 3: #DECOMMISSIONING
+                        print "Decommissioning the system"
+                        inblock_imp_treated += 0 #quite self-explanatory but is added here for clarity
+                        #remove all attributes, wipe the attributes entry in techconfigout with a blank attribute object
+                        currentAttList["Has"+str(luc_code)+"Sys"] = 0 #Remove system placeholder
+                        sys_implement.remove(sys_descr)
+                        #city.removeComponent(sys_descr.getUUID())
+                        self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+
+            currentAttList["ServWQ"] = inblock_imp_treated
+            inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
+            currentAttList["DeficitIA"] = inblock_impdeficit
+
+            allotments = currentAttList["ResAllots"]
+            Aimplot = currentAttList["ResLotEIA"]
+            print "Allotments = "+str(allotments)+" of each "+str(Aimplot)+" sqm impervious"
+            if allotments == 0:
+                  max_houses = 0
+            else:
+                  max_houses = min((inblock_impdeficit/Aimplot)/allotments, 1)
+            print "A Lot Strategy in this Block would permit a maximum implementation in: "+str(max_houses*100)+"% of houses"
+            currentAttList["MaxLotDeg"] = max_houses
+
+            #SUBBASIN
+            sys_descr = self.locatePlannedSystems(sys_implement, "B")
+            if sys_descr == None:
+                  currentAttList["HasBSys"] = 0
+            else:
+                  #DO SOMETHING TO DETERMINE IF YES/NO RETROFIT, then check the decision
+                  if time_passed - (time_passed // self.renewal_neigh_years)*self.renewal_neigh_years == 0:
+                        go_retrofit = 1 #then it's time for renewal
+                  else:
+                        go_retrofit = 0 #otherwise do not do anything
+
+                  #NOW DETERMINE IF ARE RETROFITTING OR NOT: IF NOT READY FOR RETROFIT, KEEP, ELSE GO INTO CYCLE
+                  oldImp = sys_descr["ImpT"]
+                  decision, newImpT = self.dealWithSystem(currentAttList, sys_descr, "B")
+                  if go_retrofit == 0:
+                        decision = 1
+
+                  if decision == 1: #keep
+                        print "Keeping the System"
+                        currentAttList["HasBSys"] = 1
+                        currentAttList["ServUpWQ"] = newImpT
+                        sys_descr["ImpT"] = newImpT
+                        sys_descr["CurImpT"] = newImpT * sys_descr["Qty"]
+
+                  elif decision == 2: #renewal
+                        print "Renewing the System - Redesigning and Assessing Space Requirements"
+                        newAsys, newEAFact = self.redesignSystem(currentAttList, sys_descr, "B", oldImp) #get new system size & EA
+                        if sys_descr["Type"] in ["BF", "WSUR", "PB","RT", "SW", "IS"]: #CHECK WHAT SVU Land use area is available
+                              svu_space = currentAttList["SVU_avSW"] + currentAttList["SVU_avWS"]
+                        elif sys_descr["Type"] in ["GT"]:
+                              svu_space = currentAttList["SVU_avWW"]
+                        else:
+                              svu_space = 0
+                        
+                        avlSpace = currentAttList["PG_av"] + currentAttList["REF_av"] + svu_space
+                        if newAsys > avlSpace and self.renewal_alternative == "K": #if system does not fit and alternative is 'Keep'
+                              print "Cannot fit new system design, keeping old design instead"
+                              currentAttList["HasBSys"] = 1
+                              currentAttList["ServUpWQ"] = newImpT
+                              sys_descr["ImpT"] = newImpT
+                              sys_descr["CurImpT"] = newImpT * sys_descr["Qty"]
+                        elif newAsys > avlSpace and self.renewal_alternative == "D": #if system does not fit and alternative is 'Decommission'
+                              print "Cannot fit new system design, decommissioning instead"
+                              currentAttList["ServUpWQ"] = 0
+                              currentAttList["HasBSys"] = 0 #Remove system placeholder
+                              sys_implement.remove(sys_descr)
+                              #city.removeComponent(sys_descr.getUUID())
+                              >>>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                        else: #otherwise it'll fit, transfer new information
+                              print "New System Upgrades fit, transferring this information to output"
+                              currentAttList["HasBSys"] = 1
+                              self.defineUpgradedSystemAttributes(sys_descr, newAsys, newEAFact, oldImp)
+                              currentAttList["ServUpWQ"] = oldImp        #OLD IMP BECAUSE THE REDESIGNED SYSTEM IS NOW LARGER
+                                            #AND BETTER TO HANDLE SAME IMP AREA AS BEFORE!
+                  elif decision == 3: #DECOMMISSIONING
+                        print "Decommissioning the system"
+                        currentAttList["ServUpWQ"] = 0
+                        #remove all attributes, wipe the attributes entry in techconfigout with a blank attribute object
+                        currentAttList["HasSubbasS"] = 0
+                        sys_implement.remove(sys_descr)
+                        #city.removeComponent(sys_descr.getUUID())
+                        >>>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+            return True
+
+
+      def locatePlannedSystems(self, system_list, scale):
+            """Searches the input planned technologies list for a system that fits the scale in the block
+            Returns the system attribute list. System_list is a vector of Components [curSys, curSys, curSys]
+            """
+            for curSys in system_list:
+                  if curSys["Scale"] == scale:
+                        return curSys
+            return None
+
+
+      def retrieveNewAimpTreated(self, ID, scale, sys_descr):
+            """Retrieves the system information for the given scale from the city datastream and
+            assesses how well the current system's design can meet the current targets by comparing its
+            performance on the design curves.
+            """
+            #Determine impervious area to deal with depending on scale
+            currentAttList = self.blockDict[ID]
+            #currentAttList = self.getBlockUUID(ID,city)
+            ksat = currentAttList["Soil_k"]
+            sysexfil = sys_descr["Exfil"]
+            Asyseff = sys_descr["SysArea"]/sys_descr["EAFact"]
+            wtype = sys_descr["Type"]
+            #need to be using the effective area, not the planning area
+
+            #print "Type: "+str(type)+" AsysEffective: "+str(Asyseff)+"ksat: "+str(ksat)
+
+            ### EXCEPTION FOR SWALES AT THE MOMENT WHILE THERE ARE NO DESIGN CURVE FILES ###
+            if wtype == "SW":
+                  return 0
+            ### END OF EXCEPTION - CHANGE WHEN DESIGN CURVES ARE AVAILABLE ###
+
+            #Grab targets and adjust for particular system type
+            #print "Targets: "+str(self.targetsvector)
+
+            #Piece together the pathname from current system information: FUTURE
+            #NOTE: CURRENT TECH DESIGNS WILL NOT BE CHANGED! THEREFORE PATHNAME WE RETRIEVE FROM
+            #DESIGN DETAILS VECTOR LIST
+
+            #Depending on the type of system and classification, will need to retrieve design in different
+            #ways
+            if wtype in ["BF", "SW", "WSUR", "PB", "IS"]:    #DESIGN by DCV Systems
+                  sys_perc = dcv.retrieveDesign(self.getDCVPath(wtype), wtype, min(ksat, sysexfil), self.targetsvector)
+            #print "Sys Percentage: "+str(sys_perc)
+            elif wtype in ["RT", "PP", "ASHP", "GW"]:        #DESIGN by EQN or SIM Systems
+                  #Other stuff
+                  sys_perc = np.inf #deq.retrieveDesign(...)
+
+            if sys_perc == np.inf:
+                  #Results - new targets cannot be met, system will not be considered
+                  #release the imp area, but mark the space as taken!
+                  imptreatedbysystem = 0
+            else:
+                  #Calculate the system's current Atreated
+                  imptreatedbysystem = Asyseff/sys_perc
+
+            #            #Account for Lot Scale as exception
+            #            if scale in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM"]:
+            #                imptreatedbysystem *= goalqty #imp treated by ONE lot system * the desired qty that can be implemented
+            #            else:
+            #                imptreated += imptreatedbysystem
+            #print "impervious area treated by system: "+str(imptreatedbysystem)
+            return imptreatedbysystem
+
+
+      def findDCVpath(self, wtype, sys_descr):
+            #Finds the correct pathname of the design curve file based on system type and specs
+            if wtype in ["IS", "BF"]: #then file = BF-EDDx.xm-FDx.xm.dcv
+                  pathname = 0
+            elif wtype in ["WSUR"]: #then file = WSUR-EDDx.xm.dcv
+                  pathname = 0
+            elif wtype in ["PB"]: #then file = PB-MDx.xm.dcv
+                  pathname = 0
+            return pathname
+
+
+      def dealWithSystem(self, currentAttList, sys_descr, scale):
+            """Checks the system's feasibility on a number of categories and sets up a decision matrix
+            to determine what should be done with the system (i.e. keep, upgrade, decommission). Returns
+            a final decision and the newly treated impervious area.
+            """
+
+            currentID = int(currentAttList["BlockID"])
+            scalecheck = [[self.lot_renew, self.lot_decom], 
+                        [self.street_renew, self.street_decom], 
+                        [self.neigh_renew, self.neigh_decom], 
+                        [self.prec_renew, self.prec_decom]]
+
+            if scale in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM"]:
+                  scaleconditions = scalecheck[0]
+            else:
+                  scalematrix = ["L", "S", "N", "B"]
+                  scaleconditions = scalecheck[scalematrix.index(scale)]
+
+            decision_matrix = [] #contains numbers of each decision 1=Keep, 2=Renew, 3=Decom
+            #1st pass: decision based on the maximum i.e. if [1, 3], decommission
+
+            ###-------------------------------------------------------
+            ### DECISION FACTOR 1: SYSTEM AGE
+            ### Determine where the system age lies
+            ###-------------------------------------------------------
+            sys_yearbuilt = sys_descr["Year"]
+            sys_type = sys_descr["Type"]
+            avglife = eval("self."+str(sys_type)+"avglife")
+            age = self.currentyear - sys_yearbuilt
+            #print "System Age: "+str(age)
+
+            if scaleconditions[1] == 1 and age > avglife: #decom
+                  #print "System too old, decommission"
+                  decision_matrix.append(3)
+            elif scaleconditions[0] == 1 and age > avglife/float(2.0): #renew
+                  #print "System needs renewal because of age"
+                  decision_matrix.append(2)
+            else: #keep
+                  decision_matrix.append(1)
+
+            ###-------------------------------------------------------
+            ### DECISION FACTOR 2: DROP IN PERFORMANCE
+            ### Determine where the system performance lies
+            ###-------------------------------------------------------
+            old_imp = sys_descr["ImpT"]
+            if old_imp == 0: #This can happen if for example it was found previously that
+                  perfdeficit = 1.0 #the system can no longer meet new targets, but is not retrofitted because of renewal cycles.
+                  new_imp = 0
+            else:           #Need to catch this happening or else there will be a float division error!
+                  new_imp = self.retrieveNewAimpTreated(currentID, scale, sys_descr)
+                  perfdeficit = (old_imp - new_imp)/old_imp
+
+            #print "Old Imp: "+str(old_imp)
+            #print "New Imp: "+str(new_imp)
+            #print "Performance Deficit of System: "+str(perfdeficit)
+
+            if scaleconditions[1] == 1 and perfdeficit >= (float(self.decom_thresh)/100.0): #Decom = Checked, threshold exceeded
+                  #print "System's performance not up to scratch, decommission"
+                  decision_matrix.append(3)
+            elif scaleconditions[0] == 1 and perfdeficit >= (float(self.renewal_thresh)/100.0): #Renew = checked, threshold exceeded
+                  #print "System's performance ok, needs renewal"
+                  decision_matrix.append(2)
+            else:
+                  decision_matrix.append(1)
+
+            ### MAKE FINAL DECISION ###
+            #print decision_matrix
+            final_decision = max(decision_matrix)           #worst-case chosen, i.e. maximum
+            
+            return final_decision, new_imp
+
+
+      def redesignSystem(self, currentAttList, sys_descr, scale, originalAimpTreated):
+            """Redesigns the system for BlockID at the given 'scale' for the original Impervious
+            Area that it was supposed to treat, but now according to new targets.
+            - ID: BlockID, i.e. the system's location
+            - sys_descr: the original vector of the system
+            - scale: the letter denoting system scale
+            - originalAimpTreated: the old impervious area the system was meant to treat
+            """
+            type = sys_descr["Type"]
+
+            #TO BE CHANGED LATER ON, BUT FOR NOW WE ASSUME THIS IS THE SAME PATH
+            dcvpath = self.getDCVPath(type)
+            #GET THE DCV FILENAME
+            #dcvpath = self.findDCVpath(type, sys_descr)
+
+            #Some additional arguments for the design function
+            maxsize = eval("self."+str(type)+"maxsize")                     #FUTURE >>>>>> MULTI-oBJECTIVE DESIGN
+            minsize = eval("self."+str(type)+"minsize")
+            soilK = currentAttList["Soil_k"]
+            systemK = sys_descr["Exfil"]
+
+            #Current targets
+            targets = self.targetsvector
+            tech_applications = self.getTechnologyApplications(type)
+            purpose = [0, tech_applications[1], 0]
+
+            #Call the design function using eval, due to different system Types
+            newdesign = eval('td.design_'+str(type)+'('+str(originalAimpTreated)+',"'+str(dcvpath)+'",'+str(self.targetsvector)+','+str(purpose)+','+str(soilK)+','+str(systemK)+','+str(minsize)+','+str(maxsize)+')')    
+
+            Anewsystem = newdesign[0]
+            newEAFactor = newdesign[1]
+
+            return Anewsystem, newEAFactor
+
+
+      def defineUpgradedSystemAttributes(self, sys_descr, newAsys, newEAFact, impT):
+            """Updates the current component with new attributes based on the newly designed/upgraded
+            system at a particular location.
+            """
+            sys_descr["SysArea"] = newAsys
+            sys_descr["EAFact"] = newEAFact
+            sys_descr["ImpT"] = impT
+            sys_descr["CurImpT"] = impT*sys_descr["GoalQty"]
+
+            #System was upgraded, add one to the upgrade count
+            sys_descr["Upgrades"] = sys_descr["Upgrades"] + 1
+            return True
+
+
+      def updateForBuildingStockRenewal(self, currentAttList, sys_descr):
+            """Number of houses removed from area = total currently there * lot_perc
+            evenly distribute this across those that have lot system and those that don't
+            we therefore end up calculate how many systems lost as lot-perc * how many in place
+            """
+            self.notify("YEARS")
+            self.notify(str(self.currentyear)+" "+str(self.prevyear)+" "+str(self.renewal_lot_years))
+            cycles = (float(self.currentyear) - float(self.prevyear)) // float(self.renewal_lot_years)
+            self.notify("Cycles"+str( cycles ))
+            currentQty = float(sys_descr["Qty"])
+            num_lots_lost = currentQty*self.renewal_lot_perc/100*cycles
+            newQty = currentQty - num_lots_lost
+            goalquantity = sys_descr["GoalQty"]
+
+            adjustedgoalQty = goalquantity - num_lots_lost
+            #Update goal quantity: This is how many we can only reach now because we lost some
+            sys_descr["GoalQty"] = int(adjustedgoalQty)
+
+            #Update current quantity: This is how many current exist in the map
+            sys_descr["Qty"] = int(newQty)
+            return sys_descr
+
 
       ###########################################
       #--- OPPORTUNITY MAPPING SUB-FUNCTIONS ---#
@@ -1927,8 +2603,8 @@ class UB_Techplan(Module):
             
                   #Begin scanning the next IDs
                   curindex = 0
-                  while curindex != len(streamIDs)-1:
-                        indices = [id_index for id_index, x in enumerate(downIDlist) if x == streamIDs[curindex]]
+                  while curindex != len(streamIDs):
+                        indices = [id_index for id_index, x in enumerate(self.downIDlist) if x == streamIDs[curindex]]
                         for id_index in indices:
                               streamIDs.append(self.blockIDlist[id_index])
                         curindex += 1
@@ -2591,14 +3267,13 @@ class UB_Techplan(Module):
       ######################################
       #--- GENERATING BASIN REALISATION ---#
       ######################################
-      def getBasinBlockIDs(self, currentBasinID, numblocks):
+      def getBasinBlockIDs(self, currentBasinID):
             """Retrieves all blockIDs within the single basin and returns them in the order
             of upstream to downstream based on the length of the upstream strings."""
             basinblocksortarray = []
             basinblockIDs = []
             outletID = 0
-            for i in range(int(numblocks)):
-                  currentID = i+1
+            for currentID in self.blockDict.keys():
                   currentAttList = self.blockDict[currentID]
                   if currentAttList["BasinID"] != currentBasinID:
                         continue
@@ -2673,9 +3348,9 @@ class UB_Techplan(Module):
             # print "Basin Blocks", basinBlockIDs
             # print servtype
 
-            if servtype in ["WQ", "QTY"]:
+            if servtype in ["WQ", "QTY"]:       #for basin EIA
                   total = self.retrieveAttributeFromIDs(basinBlockIDs, "Manage_EIA", "sum")
-            elif servtype in ["REC"]:
+            elif servtype in ["REC"]:           #for basin total Demand minus indoor non-res demand
                   total = self.retrieveAttributeFromIDs(basinBlockIDs, "Blk_WD", "sum") - \
                               self.retrieveAttributeFromIDs(basinBlockIDs, "wd_Nres_IN", "sum")
 
@@ -2870,9 +3545,7 @@ class UB_Techplan(Module):
                               continue                            #then skip to next one, no point otherwise
 
                         max_deg_matrix = [1]
-                        #block_Aimp = self.getBlockUUID(rbID, city).getAttribute("Manage_EIA")
                         block_Aimp = self.blockDict[rbID]["Manage_EIA"]
-                        #block_Dem = self.getBlockUUID(rbID, city).getAttribute("Blk_WD") - self.getBlockUUID(rbID, city).getAttribute("wd_Nres_IN")
                         block_Dem = self.blockDict[rbID]["Blk_WD"] - self.blockDict[rbID]["wd_Nres_IN"]
                         #print "Block details: "+str(block_Aimp)+" "+str(block_Dem)
                         if block_Aimp == 0:     #Impervious governs pretty much everything, if it is zero, don't even bother
