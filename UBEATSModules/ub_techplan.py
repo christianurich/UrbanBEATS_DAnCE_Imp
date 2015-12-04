@@ -913,23 +913,21 @@ class UB_Techplan(Module):
 
             print "Total Systems in Map: "+str(totsystems)
 
-            sysIDs = self.activesim.getAssetsWithIdentifier("SysPrevID")
-            
+            #sysIDs = self.activesim.getAssetsWithIdentifier("SysPrevID")
+            sysIDs = []
+
             #Grab the list of systems and sort them based on location into a dictionary
             system_list = {}        #Dictionary
-            for i in range(int(blocks_num)):
+            for i in self.blockDict.keys():
                   system_list[i+1] = []
             for i in range(len(sysIDs)):
-                  #curSys = city.getComponent(sysuuids[i])
                   curSys = sysIDs[i]
                   locate = int(curSys["Location"])
                   system_list[locate].append(curSys)  #Block ID [5], [curSys, curSys, curSys]
 
             #Do the retrofitting
-            for i in range(int(blocks_num)):
-                  currentID = i+1
-                  #currentAttList = self.getBlockUUID(currentID, city) #QUIT CONDITION #1 - status=0
-                  currentAttList = self.activesim.getAssetWithName("BlockID"+str(currentID))
+            for currentID in self.blockDict.keys():
+                  currentAttList = self.blockDict[currentID]
                   if currentAttList["Status"] == 0:
                         continue
 
