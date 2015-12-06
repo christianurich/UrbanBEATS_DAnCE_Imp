@@ -755,9 +755,31 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("HasNSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasBSys", DOUBLE, READ)
 
+            self.wsuddata = ViewContainer("wsuddata", COMPONENT, WRITE)
+            self.wsuddata.addAttribute("StrategyID", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("MCAscore", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("BasinID", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Location", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Scale", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Type", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Qty", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("GoalQty", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("SysArea", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Status", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Year", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("EAFact", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("ImpT", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("CurImpT", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Upgrades", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("EAFact", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("WDepth", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("FDepth", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Exfil", DOUBLE, WRITE)
+            
             views = []
             views.append(self.regiondata)
             views.append(self.blockdata)
+            views.append(self.wsuddata)
             self.registerViewContainers(views)
 
 
@@ -1640,7 +1662,7 @@ class UB_Techplan(Module):
             print sys_implement
 
             #currentAttList = self.getBlockUUID(ID,city)
-            currentAttList = self.activesim.getAssetWithName("BlockID"+str(ID))
+            currentAttList = self.blockDict[ID]
             inblock_imp_treated = 0
 
             if self.renewal_cycle_def == 0:
@@ -3803,3 +3825,276 @@ class UB_Techplan(Module):
                   if p_sample <= selection_cdf[i]:
                         return i
             return (len(selection_cdf)-1)
+
+
+      ####################################
+      #--- TRANSFER OF DATA TO OUTPUT ---#
+      ####################################
+      def writeDebugTable(self, id, basinID, basinBlockIDs, strategydata):
+            """Writes the strategy attribute table as a .csv file for debugging and post-processing
+            This is a debug function only.
+            """
+            strat_object = strategydata[0]
+            strat_score = strategydata[1]
+
+            for i in range(len(basinBlockIDs)):
+                  currentID = basinBlockIDs[i]
+                  currentAttList = self.blockDict[currentID]
+                  
+                  #Grab the strategy objects
+                  inblock_strat = strat_object.getIndividualTechStrat(currentID, "b")
+
+                  if inblock_strat == None:
+                        inblock_systems = [0,0,0,0,0,0,0]
+                        inblock_degs = [0,0,0,0,0,0,0]
+                        inblock_lotcount = [0,0,0,0,0,0,0]
+                  else:
+                        inblock_systems = inblock_strat.getTechnologies()
+                        inblock_degs = [0,0,0,0,0,0,0]
+                        inblock_lotcount = inblock_strat.getQuantity("all")
+
+                  for j in range(len(inblock_systems)):
+                        if inblock_systems[j] != 0:
+                              inblock_degs[j] = inblock_systems[j].getDesignIncrement()
+
+                  offsets_matrix = [[centreX+float(self.block_size)/16.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/12.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/8.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/4.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/3.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/4.0, centreY-float(self.block_size)/8.0],
+                                    [centreX-float(self.block_size)/8.0, centreY-float(self.block_size)/4.0],
+                                    [centreX-float(self.block_size)/4.0, centreY-float(self.block_size)/8.0]]
+                                    #[Res, HDR, LI, HI, COM, ORC, Street, Neigh, Subbas]
+                  blockscale_names = ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]
+
+            for j in range(len(blockscale_names)):
+                  if inblock_strat == None or inblock_systems[j] == 0:
+                        continue
+                  current_wsud = inblock_systems[j]
+                  scale = blockscale_names[j]
+                  coordinates = offsets_matrix[j]
+                  goalqty = inblock_lotcount[j]
+
+                  loc = ubdata.UBComponent()
+                  #loc = city.addNode(coordinates[0], coordinates[1], 0, self.wsudAttr)
+                  loc.addAttribute("StrategyID", id)
+                  loc.addAttribute("MCAscore", strat_score)
+                  loc.addAttribute("posX", coordinates[0])
+                  loc.addAttribute("posY", coordinates[1])
+                  loc.addAttribute("BasinID", basinID)
+                  loc.addAttribute("Location", currentID)
+                  loc.addAttribute("Scale", scale)
+                  loc.addAttribute("Type", current_wsud.getType())
+                  loc.addAttribute("Qty", 0)      #Currently none available
+                  loc.addAttribute("GoalQty", goalqty)  #lot scale mainly - number of lots to build
+                  loc.addAttribute("SysArea", current_wsud.getSize())
+                  loc.addAttribute("Status", 0)   #0 = not built, 1 = built
+                  loc.addAttribute("Year", 9999)
+                  loc.addAttribute("EAFact", current_wsud.getAreaFactor())
+                  loc.addAttribute("ImpT", current_wsud.getService("WQ"))
+                  loc.addAttribute("CurImpT", 0)  #New systems don't treat anything yet, not implemented
+                  loc.addAttribute("Upgrades", 0) #Done in the retrofit/implementation part
+                  #city.addComponent(loc, self.wsudAttr)
+
+                  #Transfer the key system specs
+                  if current_wsud.getType() in ["BF", "IS", "WSUR"]:
+                        loc.addAttribute("WDepth", eval("self."+str(current_wsud.getType())+"spec_EDD"))
+                  if current_wsud.getType() in ["PB"]:
+                        loc.addAttribute("WDepth", float(eval("self."+str(current_wsud.getType())+"spec_MD")))
+                  if current_wsud.getType() in ["BF", "IS"]:
+                        loc.addAttribute("FDepth", eval("self."+str(current_wsud.getType())+"spec_FD"))
+                  if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+                        loc.addAttribute("Exfil", eval("self."+str(current_wsud.getType())+"exfil"))
+                  else:
+                        loc.addAttribute("Exfil", 0)
+
+            outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
+            if outblock_strat != None:
+                  scale = "B"
+                  coordinates = offsets_matrix[7]
+
+                  loc = ubdata.UBComponent()
+                  loc.addAttribute("StrategyID", id)
+                  loc.addAttribute("MCAscore", strat_score)
+                  loc.addAttribute("posX", coordinates[0])
+                  loc.addAttribute("posY", coordinates[1])
+                  loc.addAttribute("BasinID", basinID)
+                  loc.addAttribute("Location", currentID)
+                  loc.addAttribute("Scale", scale)
+                  loc.addAttribute("Type", outblock_strat.getType())
+                  loc.addAttribute("Qty", 0)      #currently none available
+                  loc.addAttribute("GoalQty", 1)  #lot scale mainly - number of lots to build
+                  loc.addAttribute("SysArea", outblock_strat.getSize())
+                  loc.addAttribute("Status", 0)
+                  loc.addAttribute("Year", 9999)
+                  loc.addAttribute("EAFact", outblock_strat.getAreaFactor())
+                  loc.addAttribute("ImpT", outblock_strat.getService("WQ"))
+                  loc.addAttribute("CurImpT", 0)  #New systems don't treat anything yet before implemented
+                  loc.addAttribute("Upgrades", 0)
+                  #city.addComponent(loc, self.wsudAttr)
+
+                  #Transfer the key system specs
+                  if outblock_strat.getType() in ["BF", "IS", "WSUR"]:
+                        loc.addAttribute("WDepth", eval("self."+str(outblock_strat.getType())+"spec_EDD"))
+                  if outblock_strat.getType() in ["PB"]:
+                        loc.addAttribute("WDepth", float(eval("self."+str(outblock_strat.getType())+"spec_MD")))
+                  if outblock_strat.getType() in ["BF", "IS"]:
+                        loc.addAttribute("FDepth", eval("self."+str(outblock_strat.getType())+"spec_FD"))
+                  if outblock_strat.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+                        loc.addAttribute("Exfil", eval("self."+str(outblock_strat.getType())+"exfil"))
+                  else:
+                        loc.addAttribute("Exfil", 0)
+
+
+      def writeStrategyView(self, id, basinID, basinBlockIDs, strategydata):
+            """Writes the output view of the selected WSUD strategy and saves it to the 
+            self.wsudAttr View.
+            """
+            strat_object = strategydata[0]
+            strat_score = strategydata[1]
+
+            for i in range(len(basinBlockIDs)):
+                  currentID = basinBlockIDs[i]
+                  #currentAttList = self.getBlockUUID(currentID, city)
+                  currentAttList = self.blockDict[currentID]
+                  centreX = currentAttList["CentreX"]
+                  centreY = currentAttList["CentreY"]
+                  #Grab the strategy objects
+                  inblock_strat = strat_object.getIndividualTechStrat(currentID, "b")
+
+                  if inblock_strat == None:
+                        inblock_systems = [0,0,0,0,0,0,0]
+                        inblock_degs = [0,0,0,0,0,0,0]
+                        inblock_lotcount = [0,0,0,0,0,0,0]
+                  else:
+                        inblock_systems = inblock_strat.getTechnologies()
+                        inblock_degs = [0,0,0,0,0,0,0]
+                        inblock_lotcount = inblock_strat.getQuantity("all")
+
+                  for j in range(len(inblock_systems)):
+                        if inblock_systems[j] != 0:
+                              inblock_degs[j] = inblock_systems[j].getDesignIncrement()
+
+                  offsets_matrix = [[centreX+float(self.block_size)/16.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/12.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/8.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/4.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/3.0, centreY+float(self.block_size)/4.0],
+                                    [centreX+float(self.block_size)/4.0, centreY-float(self.block_size)/8.0],
+                                    [centreX-float(self.block_size)/8.0, centreY-float(self.block_size)/4.0],
+                                    [centreX-float(self.block_size)/4.0, centreY-float(self.block_size)/8.0]]
+                                    #[Res, HDR, LI, HI, COM, ORC, Street, Neigh, Subbas]
+                  blockscale_names = ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]
+
+            for j in range(len(blockscale_names)):
+                  if inblock_strat == None or inblock_systems[j] == 0:
+                        continue
+                  current_wsud = inblock_systems[j]
+                  scale = blockscale_names[j]
+                  coordinates = offsets_matrix[j]
+                  goalqty = inblock_lotcount[j]
+
+                  loc = self.wsuddata.create_feature()
+                  loc.SetField("StrategyID", id)
+                  loc.SetField("MCAscore", strat_score)
+                  loc.SetField("posX", coordinates[0])
+                  loc.SetField("posY", coordinates[1])
+                  loc.SetField("BasinID", basinID)
+                  loc.SetField("Location", currentID)
+                  loc.SetField("Scale", scale)
+                  loc.SetField("Type", current_wsud.getType())
+                  loc.SetField("Qty", 0)      #Currently none available
+                  loc.SetField("GoalQty", goalqty)  #lot scale mainly - number of lots to build
+                  loc.SetField("SysArea", current_wsud.getSize())
+                  loc.SetField("Status", 0)   #0 = not built, 1 = built
+                  loc.SetField("Year", 9999)
+                  loc.SetField("EAFact", current_wsud.getAreaFactor())
+                  loc.SetField("ImpT", current_wsud.getService("WQ"))
+                  loc.SetField("CurImpT", 0)  #New systems don't treat anything yet, not implemented
+                  loc.SetField("Upgrades", 0) #Done in the retrofit/implementation part
+
+                  #Transfer the key system specs
+                  if current_wsud.getType() in ["BF", "IS", "WSUR"]:
+                        loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_EDD"))
+                  if current_wsud.getType() in ["PB"]:
+                        loc.SetField("WDepth", float(eval("self."+str(current_wsud.getType())+"spec_MD")))
+                  if current_wsud.getType() in ["BF", "IS"]:
+                        loc.SetField("FDepth", eval("self."+str(current_wsud.getType())+"spec_FD"))
+                  if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+                        loc.SetField("Exfil", eval("self."+str(current_wsud.getType())+"exfil"))
+                  else:
+                        loc.SetField("Exfil", 0)
+
+            outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
+            if outblock_strat != None:
+                  scale = "B"
+                  coordinates = offsets_matrix[7]
+
+                  loc = self.wsuddata.create_feature()
+                  loc.SetField("SysID", )
+                  loc.SetField("StrategyID", id)
+                  loc.SetField("MCAscore", strat_score)
+                  loc.SetField("posX", coordinates[0])
+                  loc.SetField("posY", coordinates[1])
+                  loc.SetField("BasinID", basinID)
+                  loc.SetField("Location", currentID)
+                  loc.SetField("Scale", scale)
+                  loc.SetField("Type", outblock_strat.getType())
+                  loc.SetField("Qty", 0)      #currently none available
+                  loc.SetField("GoalQty", 1)  #lot scale mainly - number of lots to build
+                  loc.SetField("SysArea", outblock_strat.getSize())
+                  loc.SetField("Status", 0)
+                  loc.SetField("Year", 9999)
+                  loc.SetField("EAFact", outblock_strat.getAreaFactor())
+                  loc.SetField("ImpT", outblock_strat.getService("WQ"))
+                  loc.SetField("CurImpT", 0)  #New systems don't treat anything yet before implemented
+                  loc.SetField("Upgrades", 0)
+
+                  #Transfer the key system specs
+                  if outblock_strat.getType() in ["BF", "IS", "WSUR"]:
+                        loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_EDD"))
+                  if outblock_strat.getType() in ["PB"]:
+                        loc.SetField("WDepth", float(eval("self."+str(outblock_strat.getType())+"spec_MD")))
+                  if outblock_strat.getType() in ["BF", "IS"]:
+                        loc.SetField("FDepth", eval("self."+str(outblock_strat.getType())+"spec_FD"))
+                  if outblock_strat.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+                        loc.SetField("Exfil", eval("self."+str(outblock_strat.getType())+"exfil"))
+                  else:
+                        loc.SetField("Exfil", 0)
+            return True
+
+      def transferExistingSystemsToOutput(self, stratID, score):
+            """Writes all existing systems to the new output view under a new strategyID as they
+            will accompany all newly planned systems under a future alternative"""
+            
+            #>>>>>>>>>>>> GET EXISTING SYSTEMS
+            #existSys = self.activesim.getAssetsWithIdentifier("SysPrevID")
+            #>>>>>>>>>>>>> GET EXISTING SYSTEMS
+
+            for curSys in existSys:
+                  if curSys == None:
+                        continue        #RemoveComponent only removes the components, not the UUID, must therefore catch this
+                  loc = self.wsuddata.create_feature()   #Create a new placeholder for a component object, save it to self.wsudAttr View
+                  loc.SetField("StrategyID", stratID)
+                  loc.SetField("MCAscore", score)
+                  loc.SetField("posX", curSys["posX"])
+                  loc.SetField("posY", curSys["posY"])
+                  loc.SetField("BasinID", int(curSys["BasinID"]))
+                  loc.SetField("Location", int(curSys["Location"]))
+                  loc.SetField("Scale", curSys["Scale"])
+                  loc.SetField("Type", curSys["Type"])
+                  loc.SetField("Qty", curSys["Qty"])      #currently none available
+                  loc.SetField("GoalQty", curSys["GoalQty"])  #lot scale mainly - number of lots to build
+                  loc.SetField("SysArea", curSys["SysArea"])
+                  loc.SetField("Status", int(curSys["Status"]))
+                  loc.SetField("Year", int(curSys["Year"]))
+                  loc.SetField("EAFact", curSys["EAFact"])
+                  loc.SetField("ImpT", curSys["ImpT"])
+                  loc.SetField("CurImpT", curSys["CurImpT"])  #New systems don't treat anything yet before implemented
+                  loc.SetField("Upgrades", int(curSys["Upgrades"]))
+                  loc.SetField("WDepth", curSys["WDepth"])
+                  loc.SetField("FDepth", curSys["FDepth"])
+                  loc.SetField("Exfil", curSys["Exfil"])
+            return True
+
