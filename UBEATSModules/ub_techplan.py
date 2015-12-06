@@ -919,12 +919,14 @@ class UB_Techplan(Module):
             #Grab the list of systems and sort them based on location into a dictionary
             system_list = {}        #Dictionary
             for i in self.blockDict.keys():
-                  system_list[i+1] = []
+                  system_list[i] = []
             for i in range(len(sysIDs)):
                   curSys = sysIDs[i]
                   locate = int(curSys["Location"])
                   system_list[locate].append(curSys)  #Block ID [5], [curSys, curSys, curSys]
-
+            
+            print system_list
+            
             #Do the retrofitting
             for currentID in self.blockDict.keys():
                   currentAttList = self.blockDict[currentID]
@@ -1067,7 +1069,7 @@ class UB_Techplan(Module):
                   
                   #Begin Monte Carlo
                   basin_strategies = []
-                  for iteration in range(iterations):   #1000 monte carlo simulations
+                  for iteration in range(int(iterations)):   #1000 monte carlo simulations
                         print "Current Iteration No. "+str(iteration+1)
                         #Draw Samples
                         subbas_chosenIDs, inblocks_chosenIDs = self.selectTechLocationsByRandom(subbasPartakeIDs, basinBlockIDs)
@@ -1102,14 +1104,14 @@ class UB_Techplan(Module):
                   #need to be chosen), sort and grab the top ranking options
                   basin_strategies.sort()
                   print basin_strategies
-                  self.debugPlanning(basin_strategies, currentBasinID)
                   acceptable_options = []
                   for j in range(len(basin_strategies)):
-                        if basin_strategies[j][0] < 0:  #if the OF is <0 i.e. -1, skip
-                              continue
+                        if basin_strategies[j][0] < 0:  
+                              continue    #if the OF is <0 i.e. -1, skip
                         else:
                               acceptable_options.append(basin_strategies[j])
-                  #print acceptable_options
+                  print acceptable_options
+                  
                   if self.ranktype == "RK":
                         acceptable_options = acceptable_options[0:int(self.topranklimit)]
                   elif self.ranktype == "CI":
@@ -1511,7 +1513,7 @@ class UB_Techplan(Module):
 
                         #Get available space - depends on scale/luc-code
                         if luc_code == "S":
-                        avlSpace = currentAttList["avSt_RES"]
+                              avlSpace = currentAttList["avSt_RES"]
                         elif luc_code == "N":
                               if sys_descr["Type"] in ["BF", "WSUR", "PB","RT", "SW", "IS"]: #CHECK WHAT SVU Land use area is available
                                     svu_space = currentAttList["SVU_avSW"] + currentAttList["SVU_avWS"]
@@ -1847,7 +1849,6 @@ class UB_Techplan(Module):
             """
             #Determine impervious area to deal with depending on scale
             currentAttList = self.blockDict[ID]
-            #currentAttList = self.getBlockUUID(ID,city)
             ksat = currentAttList["Soil_k"]
             sysexfil = sys_descr["Exfil"]
             Asyseff = sys_descr["SysArea"]/sys_descr["EAFact"]
@@ -3333,6 +3334,7 @@ class UB_Techplan(Module):
             basinblocksortarray.sort()                      #sort ascending based on length of upstream string
             for i in range(len(basinblocksortarray)):
                   basinblockIDs.append(basinblocksortarray[i][1])     #append just the ID of block
+
             return basinblockIDs, outletID
 
 
@@ -3394,12 +3396,10 @@ class UB_Techplan(Module):
             #print basinBlockIDs
             # print "Basin Blocks", basinBlockIDs
             # print servtype
-
             if servtype in ["WQ", "QTY"]:       #for basin EIA
                   total = self.retrieveAttributeFromIDs(basinBlockIDs, "Manage_EIA", "sum")
             elif servtype in ["REC"]:           #for basin total Demand minus indoor non-res demand
-                  total = self.retrieveAttributeFromIDs(basinBlockIDs, "Blk_WD", "sum") - \
-                              self.retrieveAttributeFromIDs(basinBlockIDs, "wd_Nres_IN", "sum")
+                  total = self.retrieveAttributeFromIDs(basinBlockIDs, "Blk_WD", "sum") - self.retrieveAttributeFromIDs(basinBlockIDs, "wd_Nres_IN", "sum")
 
             # print "total", total
             # print "Total Imp Area: "+str(total)
