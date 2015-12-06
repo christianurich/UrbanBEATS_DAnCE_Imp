@@ -933,6 +933,12 @@ class UB_Techplan(Module):
 
                   sys_implement = system_list[currentID]
                   if len(sys_implement) == 0:
+                        currentAttList["ServWQ"] = 0        #These indicate the amount of service already provided
+                        currentAttList["ServQTY"] = 0
+                        currentAttList["ServREC"] = 0
+                        currentAttList["ServUpQTY"] = 0
+                        currentAttList["ServUpWQ"] = 0
+                        currentAttList["ServUpREC"] = 0
                         continue
 
                   if self.retrofit_scenario == "N":
@@ -1395,7 +1401,11 @@ class UB_Techplan(Module):
                         sys_descr["CurImpT"] = imptreated * sys_descr["Qty"]
                         #Do Nothing Scenario: ImpT changes and CurImpT changes, but Status remains 1
 
+            print "DEBUG: Assignign VAriables"
             currentAttList["ServWQ"] = inblock_imp_treated
+            currentAttList["ServQTY"] = 0
+            currentAttList["ServREC"] = 0
+
             inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
             currentAttList["DeficitWQ"] = inblock_impdeficit
             print "Deficit Area still to treat inblock: "+str(inblock_impdeficit)
@@ -1411,8 +1421,11 @@ class UB_Techplan(Module):
             #PRECINCT SYSTEMS
             sys_descr = self.locatePlannedSystems(sys_implement, "B")
             if sys_descr == None:
+                  print "no Systems"
                   currentAttList["HasBSys"] = 0
                   currentAttList["ServUpWQ"] = 0
+                  currentAttList["ServUpQTY"] = 0
+                  currentAttList["ServUpREC"] = 0
             else:
                   currentAttList["HasBSys"] = 1
                   subbasimptreated = self.retrieveNewAimpTreated(ID, "B", sys_descr)
@@ -1511,6 +1524,9 @@ class UB_Techplan(Module):
                         self.activesim.removeAssetByName("SysPrevID"+str(sys_descr.getAttribute("SysID")))
 
             currentAttList["ServWQ"] = inblock_imp_treated
+            currentAttList["ServQTY"] = 0
+            currentAttList["ServREC"] = 0
+
             inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
             currentAttList["DeficitIA"] = inblock_impdeficit
 
@@ -1708,6 +1724,9 @@ class UB_Techplan(Module):
                         self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
 
             currentAttList["ServWQ"] = inblock_imp_treated
+            currentAttList["ServQTY"] = 0
+            currentAttList["ServREC"] = 0
+
             inblock_impdeficit = max(currentAttList["Manage_EIA"] - inblock_imp_treated, 0)
             currentAttList["DeficitIA"] = inblock_impdeficit
 
