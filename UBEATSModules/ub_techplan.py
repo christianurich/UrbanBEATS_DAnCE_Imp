@@ -1532,7 +1532,7 @@ class UB_Techplan(Module):
                               inblock_imp_treated += 0 #quite self-explanatory but is added here for clarity
                               currentAttList["Has"+str(luc_code)+"Sys"] = 1
                               sys_implement.remove(sys_descr)
-                              >>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                              #>>>>>>>>>>>>>>>>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
                         else: #otherwise it'll fit, transfer new information
                               print "New System Upgrades fit, transferring this information to output"
                               currentAttList["Has"+str(luc_code)+"Sys"] = 1
@@ -1615,7 +1615,7 @@ class UB_Techplan(Module):
                         currentAttList["HasSubbasS"] = 0
                         sys_implement.remove(sys_descr)
                         #city.removeComponent(sys_descr.getUUID())
-                        >>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                        #>>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
             return True
 
 
@@ -1812,7 +1812,7 @@ class UB_Techplan(Module):
                               currentAttList["HasBSys"] = 0 #Remove system placeholder
                               sys_implement.remove(sys_descr)
                               #city.removeComponent(sys_descr.getUUID())
-                              >>>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                              #>>>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
                         else: #otherwise it'll fit, transfer new information
                               print "New System Upgrades fit, transferring this information to output"
                               currentAttList["HasBSys"] = 1
@@ -1826,7 +1826,7 @@ class UB_Techplan(Module):
                         currentAttList["HasSubbasS"] = 0
                         sys_implement.remove(sys_descr)
                         #city.removeComponent(sys_descr.getUUID())
-                        >>>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                        #>>>> self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
             return True
 
 
@@ -1874,7 +1874,7 @@ class UB_Techplan(Module):
                   sys_perc = dcv.retrieveDesign(self.getDCVPath(wtype), wtype, min(ksat, sysexfil), self.targetsvector)
             #print "Sys Percentage: "+str(sys_perc)
             elif wtype in ["RT", "PP", "ASHP", "GW"]:        #DESIGN by EQN or SIM Systems
-                  #Other stuff
+                  #Other system types
                   sys_perc = np.inf #deq.retrieveDesign(...)
 
             if sys_perc == np.inf:
