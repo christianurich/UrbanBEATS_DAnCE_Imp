@@ -1283,6 +1283,31 @@ class UB_Techplan(Module):
             mca_soc = self.rescaleMCAscorelists(mca_soc)
             return mca_techlist, mca_tech, mca_env, mca_ecn, mca_soc
 
+      def penalizeMCAscore(self, bstrategy, method, services):
+            """Penalty function that modifies the MCA score of the total basin strategy based on the required service
+            level. There are three possible methods:
+            (1) SNP - no penalty, nothing happens,
+            (2) SLP - linear penalty function: revised score = current_score - (a*diff._service)*current_score
+            (3) SPP - non-linear penalty as a power function: revised score = current_score - (a*diff._service^b)*current_score
+            The coefficients a and b are set in UrbanBEATS' advanced options.
+            """
+            if method == "SNP":
+                  return True
+
+            bSvalues = bstrategy.getServicePvalues()
+            dSQty = max(0, (bSvalues[0] - services[0])*int(self.penaltyQty))   #only applies to overtreatment
+            dSWQ = max(0, (bSvalues[1] - services[1])*int(self.penaltyWQ))
+            dSRec = max(0, (bSvalues[2] - services[2])*int(self.penaltyRec))
+
+            if method == "SLP":
+                  a = 1.0
+                  bstrategy.setTotalMCAscore(max(0, bstrategy.getTotalMCAscore() - a* sum(dSQty, dSWQ, dSRec) * bstrategy.getTotalMCAscore()))
+            elif method == "SPP":
+                  a = self.penaltyFa
+                  b = self.penaltyFb
+                  bstrategy.setTotalMCAscore(max(0, bstrategy.getTotalMCAscore() - a* pow(sum(dSQty, dSWQ, dSRec),b)))
+            return True
+
 
       def identifyMCAmetriccount(self, metriclist):
             """A function to read the MCA file and identify how many technical, environmental
