@@ -26,7 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from pydynamind import *
 
-TESTFILE = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/Test Data/caseyclyde_500m_testdata.csv"
+#TESTFILE = "C:/Users/Peter Bach/Documents/Coding Projects/UrbanBEATS_DAnCE_Imp/Test Data/caseyclyde_500m_testdata.csv" #Mabook Path
+TESTFILE = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/Test Data/caseyclyde_500m_testdata.csv" #Office Path
 
 class UB_TranslateBlockData(Module):
 
