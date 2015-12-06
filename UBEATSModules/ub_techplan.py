@@ -2641,6 +2641,8 @@ class UB_Techplan(Module):
                   #First group of IDs
                   indices = [id_index for id_index, x in enumerate(self.downIDlist) if x == curID]
                   for id_index in indices:
+                        if id_index == -1:
+                              continue
                         streamIDs.append(self.blockIDlist[id_index])
             
                   #Begin scanning the next IDs
@@ -2654,11 +2656,15 @@ class UB_Techplan(Module):
             elif direction == "downstream":
                   while curID != -1:
                         try: 
-                              streamIDs.append(self.downIDlist[self.blockIDlist.index(curID)])
+                              downID = self.downIDlist[self.blockIDlist.index(curID)]
+                              if downID == -1:
+                                    curID = -1
+                                    continue
+                              else:
+                                    streamIDs.append(downID)
                               curID = self.downIDlist[self.blockIDlist.index(curID)]
-                        except ValueError:
+                        except:
                               curID = -1
-
             if len(streamIDs) == 0:
                   return []
             else:
