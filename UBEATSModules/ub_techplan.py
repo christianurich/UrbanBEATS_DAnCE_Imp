@@ -1570,7 +1570,7 @@ class UB_Techplan(Module):
                         currentAttList["Has"+str(luc_code)+"Sys"] = 0 #Remove system placeholder
                         sys_implement.remove(sys_descr)
                         #city.removeComponent(sys_descr.getUUID())
-                        self.activesim.removeAssetByName("SysPrevID"+str(sys_descr.getAttribute("SysID")))
+                        #>>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr.getAttribute("SysID")))
 
             currentAttList["ServWQ"] = inblock_imp_treated
             currentAttList["ServQTY"] = 0
@@ -1625,7 +1625,7 @@ class UB_Techplan(Module):
                               currentAttList["HasBSys"] = 0       #Remove system placeholder
                               sys_implement.remove(sys_descr)
                               #city.removeComponent(sys_descr.getUUID())
-                              self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                              #>>>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
                         else: #otherwise it'll fit, transfer new information
                               print "New System Upgrades fit, transferring this information to output"
                               currentAttList["HasBSys"] = 1
@@ -1756,7 +1756,7 @@ class UB_Techplan(Module):
                                     currentAttList["Has"+str(luc_code)+"Sys"] = 1
                                     sys_implement.remove(sys_descr)
                                     #city.removeComponent(sys_descr.getUUID())
-                                    self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                                    #>>>>.self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
                               else: #otherwise it'll fit, transfer new information
                                     print "New System Upgrades fit, transferring this information to output"
                                     currentAttList["Has"+str(luc_code)+"Sys"] = 1
@@ -1770,7 +1770,7 @@ class UB_Techplan(Module):
                         currentAttList["Has"+str(luc_code)+"Sys"] = 0 #Remove system placeholder
                         sys_implement.remove(sys_descr)
                         #city.removeComponent(sys_descr.getUUID())
-                        self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
+                        #>>>.self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
 
             currentAttList["ServWQ"] = inblock_imp_treated
             currentAttList["ServQTY"] = 0
