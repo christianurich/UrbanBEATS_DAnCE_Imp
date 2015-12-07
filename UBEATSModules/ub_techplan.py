@@ -1175,6 +1175,7 @@ class UB_Techplan(Module):
                         stratID = j+1
                         self.writeStrategyView(stratID, currentBasinID, basinBlockIDs, cur_strat)
                         self.transferExistingSystemsToOutput(stratID, cur_strat[1])
+                        self.writeDebugTable(stratID, currentBasinID, basinBlockIDs, cur_strat)
 
                   #Clear the array and garbage collect
                   basin_strategies = []
@@ -3835,7 +3836,7 @@ class UB_Techplan(Module):
             """Writes the strategy attribute table as a .csv file for debugging and post-processing
             This is a debug function only.
             """
-            f = open("Debug_basin"+str(basinID)+"_"+str(id)+".csv", 'w')
+            f = open("D:/Debug_basin"+str(basinID)+"_"+str(id)+".csv", 'w')
             f.write("StrategyID, MCAScore, BasinID, Location, Scale, Type, Qty, GoalQty, SysArea, Status, Year, EAFact, ImpT, CurImpT, Upgrades, WDepth, FDepth, Exfil, \n")
 
             strat_object = strategydata[0]
@@ -3868,7 +3869,7 @@ class UB_Techplan(Module):
                               continue
                         current_wsud = inblock_systems[j]
                         scale = blockscale_names[j]
-                        coordinates = offsets_matrix[j]
+                        
                         goalqty = inblock_lotcount[j]
 
                         datastring = ""
@@ -3877,7 +3878,7 @@ class UB_Techplan(Module):
                         datastring += str(basinID)+","      #BasinID
                         datastring += str(currentID)+","    #Location
                         datastring += str(scale)+","                    #Scale
-                        datastrong += str(current_wsud.getType())+","   #Type
+                        datastring += str(current_wsud.getType())+","   #Type
                         datastring += str(0)+","            #Qty
                         datastring += str(goalqty)+","      #GoalQty
                         datastring += str(current_wsud.getSize())+","   #SysArea
@@ -3918,7 +3919,7 @@ class UB_Techplan(Module):
                         datastring += str(basinID)+","      #BasinID
                         datastring += str(currentID)+","    #Location
                         datastring += str(scale)+","                    #Scale
-                        datastrong += str(outblock_strat.getType())+","   #Type
+                        datastring += str(outblock_strat.getType())+","   #Type
                         datastring += str(0)+","            #Qty
                         datastring += str(1)+","      #GoalQty
                         datastring += str(outblock_strat.getSize())+","   #SysArea
@@ -3931,9 +3932,9 @@ class UB_Techplan(Module):
 
                         #Transfer the key system specs
                         if current_wsud.getType() in ["BF", "IS", "WSUR"]:
-                              datastring += str(float(eval("self."+str(outblock_strat.getType())+"spec_EDD")))+","
+                              datastring += str(eval("self."+str(outblock_strat.getType())+"spec_EDD"))+","
                         elif current_wsud.getType() in ["PB"]:
-                              datastring += str(float(eval("self."+str(outblock_strat.getType())+"spec_MD")))+","
+                              datastring += str(eval("self."+str(outblock_strat.getType())+"spec_MD"))+","
                         else:
                               datastring += str(0)+","      #All other systems - WDepth = 0
 
@@ -3965,8 +3966,6 @@ class UB_Techplan(Module):
                   currentID = basinBlockIDs[i]
                   #currentAttList = self.getBlockUUID(currentID, city)
                   currentAttList = self.blockDict[currentID]
-                  centreX = currentAttList["CentreX"]
-                  centreY = currentAttList["CentreY"]
                   #Grab the strategy objects
                   inblock_strat = strat_object.getIndividualTechStrat(currentID, "b")
 
@@ -3983,15 +3982,6 @@ class UB_Techplan(Module):
                         if inblock_systems[j] != 0:
                               inblock_degs[j] = inblock_systems[j].getDesignIncrement()
 
-                  offsets_matrix = [[centreX+float(self.block_size)/16.0, centreY+float(self.block_size)/4.0],
-                                    [centreX+float(self.block_size)/12.0, centreY+float(self.block_size)/4.0],
-                                    [centreX+float(self.block_size)/8.0, centreY+float(self.block_size)/4.0],
-                                    [centreX+float(self.block_size)/4.0, centreY+float(self.block_size)/4.0],
-                                    [centreX+float(self.block_size)/3.0, centreY+float(self.block_size)/4.0],
-                                    [centreX+float(self.block_size)/4.0, centreY-float(self.block_size)/8.0],
-                                    [centreX-float(self.block_size)/8.0, centreY-float(self.block_size)/4.0],
-                                    [centreX-float(self.block_size)/4.0, centreY-float(self.block_size)/8.0]]
-                                    #[Res, HDR, LI, HI, COM, ORC, Street, Neigh, Subbas]
                   blockscale_names = ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]
 
             for j in range(len(blockscale_names)):
@@ -3999,14 +3989,11 @@ class UB_Techplan(Module):
                         continue
                   current_wsud = inblock_systems[j]
                   scale = blockscale_names[j]
-                  coordinates = offsets_matrix[j]
                   goalqty = inblock_lotcount[j]
 
                   loc = self.wsuddata.create_feature()
                   loc.SetField("StrategyID", id)
                   loc.SetField("MCAscore", strat_score)
-                  loc.SetField("posX", coordinates[0])
-                  loc.SetField("posY", coordinates[1])
                   loc.SetField("BasinID", basinID)
                   loc.SetField("Location", currentID)
                   loc.SetField("Scale", scale)
@@ -4025,7 +4012,7 @@ class UB_Techplan(Module):
                   if current_wsud.getType() in ["BF", "IS", "WSUR"]:
                         loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_EDD"))
                   if current_wsud.getType() in ["PB"]:
-                        loc.SetField("WDepth", float(eval("self."+str(current_wsud.getType())+"spec_MD")))
+                        loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_MD"))
                   if current_wsud.getType() in ["BF", "IS"]:
                         loc.SetField("FDepth", eval("self."+str(current_wsud.getType())+"spec_FD"))
                   if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
@@ -4036,14 +4023,10 @@ class UB_Techplan(Module):
             outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
             if outblock_strat != None:
                   scale = "B"
-                  coordinates = offsets_matrix[7]
 
                   loc = self.wsuddata.create_feature()
-                  loc.SetField("SysID", )
                   loc.SetField("StrategyID", id)
                   loc.SetField("MCAscore", strat_score)
-                  loc.SetField("posX", coordinates[0])
-                  loc.SetField("posY", coordinates[1])
                   loc.SetField("BasinID", basinID)
                   loc.SetField("Location", currentID)
                   loc.SetField("Scale", scale)
@@ -4062,7 +4045,7 @@ class UB_Techplan(Module):
                   if outblock_strat.getType() in ["BF", "IS", "WSUR"]:
                         loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_EDD"))
                   if outblock_strat.getType() in ["PB"]:
-                        loc.SetField("WDepth", float(eval("self."+str(outblock_strat.getType())+"spec_MD")))
+                        loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_MD"))
                   if outblock_strat.getType() in ["BF", "IS"]:
                         loc.SetField("FDepth", eval("self."+str(outblock_strat.getType())+"spec_FD"))
                   if outblock_strat.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
@@ -4078,6 +4061,7 @@ class UB_Techplan(Module):
             #>>>>>>>>>>>> GET EXISTING SYSTEMS
             #existSys = self.activesim.getAssetsWithIdentifier("SysPrevID")
             #>>>>>>>>>>>>> GET EXISTING SYSTEMS
+            existSys = []
 
             for curSys in existSys:
                   if curSys == None:
@@ -4085,8 +4069,6 @@ class UB_Techplan(Module):
                   loc = self.wsuddata.create_feature()   #Create a new placeholder for a component object, save it to self.wsudAttr View
                   loc.SetField("StrategyID", stratID)
                   loc.SetField("MCAscore", score)
-                  loc.SetField("posX", curSys["posX"])
-                  loc.SetField("posY", curSys["posY"])
                   loc.SetField("BasinID", int(curSys["BasinID"]))
                   loc.SetField("Location", int(curSys["Location"]))
                   loc.SetField("Scale", curSys["Scale"])
