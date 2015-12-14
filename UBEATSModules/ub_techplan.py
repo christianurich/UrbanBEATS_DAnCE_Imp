@@ -1080,9 +1080,16 @@ class UB_Techplan(Module):
                   #SKIP CONDITIONS
                   if basinRemainQTY == 0.0 and basinRemainWQ == 0.0 and basinRemainREC == 0.0:
                         #print "Basin ID: ", currentBasinID, " has no remaining service requirements, skipping!"
+                        print "Transferring existing systems across"
+                        for stratnum in range(int(self.num_output_strats)):
+                              self.transferExistingSystemsToOutput(int(stratnum+1)), 0, currentBasinID)
                         continue
                   if sum(updatedService) == 0:
+                        print "Transferring existing systems across"
+                        for stratnum in range(int(self.num_output_strats)):
+                              self.transferExistingSystemsToOutput(int(stratnum+1)), 0, currentBasinID)
                         continue
+
 
                   iterations = self.maxMCiterations   #MONTE CARLO ITERATIONS - CAN SET TO SENSITIVITY VALUE IN FUTURE RELATIVE TO BASIN SIZE
 
@@ -1167,14 +1174,14 @@ class UB_Techplan(Module):
                   #Write WSUD strategy attributes to output vector for that block
                   print final_selection
                   if len(final_selection) == 0:
-                        self.transferExistingSystemsToOutput(1, 0)
+                        self.transferExistingSystemsToOutput(1, 0, currentBasinID)
                         #If there are no additional plans, just tranfer systems across, only one output as StrategyID1
-
+                        
                   for j in range(len(final_selection)):       #Otherwise it'll loop
                         cur_strat = final_selection[j]
                         stratID = j+1
                         self.writeStrategyView(stratID, currentBasinID, basinBlockIDs, cur_strat)
-                        self.transferExistingSystemsToOutput(stratID, cur_strat[1])
+                        self.transferExistingSystemsToOutput(stratID, cur_strat[1], currentBasinID)
                         self.writeDebugTable(stratID, currentBasinID, basinBlockIDs, cur_strat)
 
                   #Clear the array and garbage collect
@@ -1223,7 +1230,7 @@ class UB_Techplan(Module):
             userTechList (the created dictionary output from self.compileUserTechList()
             """
             techlist = []
-            if eval("self.strategy_"+scale+"_check == 1"):
+            if eval("self.strategy_"+scale+"_check") == 1:
                   if scale == "subbas":
                         scalelookup = "prec"
                   else:
@@ -1957,8 +1964,8 @@ class UB_Techplan(Module):
             ###-------------------------------------------------------
             sys_yearbuilt = sys_descr["Year"]
             sys_type = sys_descr["Type"]
-            avglife = eval("self."+str(sys_type)+"avglife")
-            age = self.currentyear - sys_yearbuilt
+            avglife = float(eval("self."+str(sys_type)+"avglife"))
+            age = float(self.currentyear - sys_yearbuilt)
             #print "System Age: "+str(age)
 
             if scaleconditions[1] == 1 and age > avglife: #decom
@@ -4054,7 +4061,7 @@ class UB_Techplan(Module):
                         loc.SetField("Exfil", 0)
             return True
 
-      def transferExistingSystemsToOutput(self, stratID, score):
+      def transferExistingSystemsToOutput(self, stratID, score, basinID):
             """Writes all existing systems to the new output view under a new strategyID as they
             will accompany all newly planned systems under a future alternative"""
             
@@ -4066,6 +4073,8 @@ class UB_Techplan(Module):
             for curSys in existSys:
                   if curSys == None:
                         continue        #RemoveComponent only removes the components, not the UUID, must therefore catch this
+                  if int(curSys.getAttribute("BasinID")) != int(basinID):
+                        continue        #If the system is not in the current basin, don't transfer it yet.
                   loc = self.wsuddata.create_feature()   #Create a new placeholder for a component object, save it to self.wsudAttr View
                   loc.SetField("StrategyID", stratID)
                   loc.SetField("MCAscore", score)
