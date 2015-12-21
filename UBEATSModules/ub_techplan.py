@@ -755,6 +755,17 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("HasNSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasBSys", DOUBLE, READ)
 
+            # self.blockdata.addAttribute("wd_RES_K", DOUBLE, READ)       #[kL/day]
+            # self.blockdata.addAttribute("wd_RES_S", DOUBLE, READ)        #[kL/day]
+            # self.blockdata.addAttribute("wd_RES_T", DOUBLE, READ)        #[kL/day]
+            # self.blockdata.addAttribute("wd_RES_L", DOUBLE, READ)       #[kL/day]
+            # self.blockdata.addAttribute("wd_RES_I", DOUBLE, READ) 
+            # self.blockdata.addAttribute("wd_HDR_K", DOUBLE, READ)       #[kL/day]
+            # self.blockdata.addAttribute("wd_HDR_S", DOUBLE, READ)        #[kL/day]
+            # self.blockdata.addAttribute("wd_HDR_T", DOUBLE, READ)        #[kL/day]
+            # self.blockdata.addAttribute("wd_HDR_L", DOUBLE, READ)       #[kL/day]
+            # self.blockdata.addAttribute("wd_HDR_I", DOUBLE, READ)    #[kL/day]
+
             self.wsuddata = ViewContainer("wsuddata", COMPONENT, WRITE)
             self.wsuddata.addAttribute("StrategyID", DOUBLE, WRITE)
             self.wsuddata.addAttribute("MCAscore", DOUBLE, WRITE)
