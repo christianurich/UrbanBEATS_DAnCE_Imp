@@ -1017,7 +1017,7 @@ class UB_Techplan(Module):
                   lot_techCOM = [0]
                   street_tech = [0]
                   neigh_tech = [0]
-                  subbas_tech = [0]
+                  subbas_tech = {}        #Initialised as empty
 
                   
                         #---- C.3.1 -- Assess Lot Opportunities -----------------------------
@@ -3470,6 +3470,60 @@ class UB_Techplan(Module):
             options arrays. Returns an updated current_bstrategy object completed with all details.
             """
             partakeIDs = current_bstrategy.getSubbasPartakeIDs()    #returned in order upstream-->downstream
+            basintotals = current_strategy.getBasinTotalValues()
+
+            if len(partakeIDs) == 0:
+                  subbas_treatedAimpQTY = 0  #Sum of already treated imp area in upstream sub-basins and the now planned treatment
+                  subbas_treatedAimpWQ = 0
+                  subbas_treatedDemREC = 0
+                  remainAimp_subbasinQTY = max(basintotals[0] - subbas_treatedAimpQTY, 0)
+                  remainAimp_subbasinWQ = max(basintotals[1] - subbas_treatedAimpWQ, 0)
+                  remainDem_subbasinRec = max(basintotals[2] - subbas_treatedDemREC, 0)
+
+                  #No sub-basin systems, the only populate with in-block technologies using entire basinBlockID list as a guide
+                  for rbID in basinBlockIDs:
+                      if rbID not in inblocks_chosenIDs:        #If the Block ID hasn't been chosen,
+                          #print "rbID not in inblocks_chosenIDs"
+                          continue                            #then skip to next one, no point otherwise
+
+                      #Calculate max-degree (1 or less)
+                      max_deg_matrix = []
+
+                      block_Aimp = self.blockDict[rbID]["Manage_EIA"]
+                      block_Dem = self.blockDict[rbID]["Blk_WD"] - self.blockDict[rbID]["wd_Nres_IN"]
+
+                      #print "Block details: "+str(block_Aimp)+" "+str(block_Dem)
+                      if block_Aimp == 0: #Impervious governs pretty much everything, if it is zero, don't even bother
+                          continue
+                      if bool(int(self.ration_runoff)):
+                          max_deg_matrix.append(float(remainAimp_subbasinQTY)/float(block_Aimp))
+                      if bool(int(self.ration_pollute)):
+                          max_deg_matrix.append(float(remainAimp_subbasinWQ)/float(block_Aimp))
+                      if bool(int(self.ration_harvest)):      #If and only if we are harvesting, we do something to max_deg re block_Dem, otherwise...
+                          if block_Dem == 0:
+                              continue
+                          else:
+                              max_deg_matrix.append(float(remainDem_subbasinRec)/float(block_Dem))
+                      if len(max_deg_matrix) == 0:
+                          continue    #If all three cases are not valid then the matrix remains empty
+
+                      max_degree = min(min(max_deg_matrix)+float(self.service_redundancy/100.0), 1.0)  #choose the minimum, bring in allowance using redundancy parameter
+
+                      deg, obj, treatedQTY, treatedWQ, treatedREC, iaoqty, iaowq = self.pickOption(rbID,max_degree,inblock_options, [block_Aimp*bool(int(self.ration_runoff)), block_Aimp*bool(int(self.ration_pollute)), block_Dem*bool(int(self.ration_harvest))], "BS")
+                      #print "Option Treats: "+str([treatedQTY, treatedWQ, treatedREC])
+                      #print obj
+
+                      subbas_treatedAimpQTY += treatedQTY + iaoqty
+                      subbas_treatedAimpWQ += treatedWQ + iaowq
+                      subbas_treatedDemREC += treatedREC
+                      remainAimp_subbasinQTY = max(remainAimp_subbasinQTY - treatedQTY, 0)
+                      remainAimp_subbasinWQ = max(remainAimp_subbasinWQ - treatedWQ, 0)
+                      remainDem_subbasinRec = max(remainDem_subbasinRec - treatedREC, 0)
+                      #print "Remaining: "+str([remainAimp_subbasinQTY, remainAimp_subbasinWQ, remainDem_subbasinRec])
+                      if deg != 0 and obj != 0:
+                          current_bstrategy.appendTechnology(rbID, deg, obj, "b")
+
+                  return True     #Exit the function after in-block placement
 
             #Make a copy of partakeIDs to track blocks
             partakeIDsTracker = []
@@ -3559,9 +3613,7 @@ class UB_Techplan(Module):
                   remainAimp_subbasinWQ = max(totalAimpWQ - subbas_treatedAimpWQ, 0)
                   if bool(int(self.ration_pollute)) and totalAimpWQ != 0:
                         max_deg_matrix.append(remainAimp_subbasinWQ / totalAimpWQ)
-                  #else:
-                        #max_deg_matrix.append(0)
-
+                  
                   if self.hs_strategy == 'ud':
                         totSupply = 0
                         downstreamIDs = []      #the complete matrix of all downstream IDs from all upstream sbIDs
@@ -3589,11 +3641,12 @@ class UB_Techplan(Module):
 
                   if bool(int(self.ration_harvest)) and totalDemREC != 0:
                         max_deg_matrix.append(remainDem_subbasinRec / totalDemREC)
-                  #else:
-                        #max_deg_matrix.append(0)
-
+                  
                   # print "Max_deg_matrix", max_deg_matrix
                   # print "Max Degre matrix: "+str(max_deg_matrix)
+                  if len(max_deg_matrix) == 0:
+                      continue
+
                   max_degree = min(max_deg_matrix)+float(self.service_redundancy/100.0)  #choose the minimum, bring in allowance using redundancy parameter
 
                   current_bstrategy.addSubBasinInfo(currentBlockID, upstreamIDs, subbasinIDs, [totalAimpQTY,totalAimpWQ,totalDemREC])
