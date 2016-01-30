@@ -304,6 +304,9 @@ class RecycledStorage(object):
     
     def getAreaOfHarvest(self):
         return self.__Aharvest
+
+    def getRealSupply(self):
+        return float(self.__supply * self.__rel/100.0)
     
 class WaterTech(object):
     def __init__(self, type, size, scale, service, areafactor, landuse, blockID):
@@ -331,7 +334,7 @@ class WaterTech(object):
         self.__designincrement = 1.0    #If design increment = 1.0, then service matrix will be either all imp area or zero
         self.__blockID = blockID
         self.__rec_store = None
-        self.__rec_store_type = ""
+        self.__rec_store_type = "NA"
         self.__rec_integrated = 0
         self.__rec_store_surfaceArea = 0.0
         self.__rec_store_areafactor = 0.0
@@ -354,20 +357,29 @@ class WaterTech(object):
             self.isGreyTech = False
             self.isGreenTech = True
 
-    def addRecycledStoreToTech(self, storeObj, recsurfarea, type, integrated):
+    def addRecycledStoreToTech(self, storeObj, recsurfarea, stype, integrated):
         self.__rec_store = storeObj
-        self.__service["Rec"] = storeObj.getSupply()
+        self.__service["Rec"] = storeObj.getSupply()    #IN kL/yr
         self.__rec_integrated = integrated
-        self.__rec_store_type = type
+        self.__rec_store_type = stype
         self.__rec_store_surfaceArea = recsurfarea[0]
         self.__rec_store_areafactor = recsurfarea[1]
         return True
+
+    def getRecycledStorageVolume(self):
+        if self.__rec_store == None:
+            return 0
+        else:
+            return self.__rec_store.getSize()
 
     def getRecycledStorage(self):
         return self.__rec_store
 
     def getRecycledStorageType(self):
         return self.__rec_store_type
+
+    def isStoreIntegrated(self):
+        return self.__rec_integrated
 
     def getStoreSurfArea(self):
         if bool(self.__rec_Integrated):

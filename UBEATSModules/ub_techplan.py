@@ -158,6 +158,49 @@ class UB_Techplan(Module):
             self.swh_unitrunoff_auto = 0
 
             ##########################################################################
+            #---WATER USE EFFICIENCY AND RECYCLING STRATEGY DESIGN INPUTS            
+            ##########################################################################
+
+            #WATER DEMAND PATTERNS
+            #--> Water Demands
+            self.createParameter("ffp_kitchen", STRING, "")
+            self.createParameter("ffp_shower", STRING, "")
+            self.createParameter("ffp_toilet", STRING, "")
+            self.createParameter("ffp_laundry", STRING, "")
+            self.createParameter("ffp_garden", STRING, "")
+            self.ffp_kitchen = "SW"
+            self.ffp_shower = "SW"
+            self.ffp_toilet = "SW"
+            self.ffp_laundry = "SW"
+            self.ffp_garden = "SW"
+
+            self.createParameter("ffp_nonres", STRING, "")
+            self.ffp_nonres = "SW"
+
+            self.createParameter("public_irr_wq", STRING, "")
+            self.public_irr_wq = "SW"       #PO = potable, NP = non-potable, RW = rainwater, SW = stormwater, GW = greywater
+
+            #REGIONAL RECYCLING-SUPPLY ZONES
+            self.createParameter("rec_demrange_min", DOUBLE, "")
+            self.createParameter("rec_demrange_max", DOUBLE, "")
+            self.createParameter("hs_strategy", STRING, "")
+            self.rec_demrange_min = 10.0
+            self.rec_demrange_max = 100.0
+            self.hs_strategy = "ud"         #ud = upstream-downstream, uu = upstream-upstream, ua = upstream-around
+
+            #ADDITIONAL INPUTS
+            self.createParameter("sb_method", STRING, "")
+            self.createParameter("rain_length", DOUBLE, "")
+            self.createParameter("swh_benefits", BOOL, "")
+            self.createParameter("swh_unitrunoff", DOUBLE, "")
+            self.createParameter("swh_unitrunoff_auto", BOOL, "")
+            self.sb_method = "Sim"  #Sim = simulation, Eqn = equation
+            self.rain_length = 2.0   #number of years.
+            self.swh_benefits = 1   #execute function to calculate SWH benefits? (1 by default, but perhaps treat as mutually exclusive)
+            self.swh_unitrunoff = 0.545  #Unit runoff rate [kL/sqm impervious]
+            self.swh_unitrunoff_auto = 0
+
+            ##########################################################################
             #---RETROFIT CONDITIONS INPUTS                                           
             ##########################################################################
 
@@ -498,8 +541,6 @@ class UB_Techplan(Module):
 
             self.scaleabbr = ["lot", "street", "neigh", "prec"]
             self.ffplevels = {"PO":1, "NP":2, "RW":3, "SW":4, "GW":5}  #Used to determine when a system is cleaner than the other
-            self.sqlDB = 0  #Global variable to hold the sqlite database
-            self.dbcurs = 0 #cursor to execute sqlcommands for the sqlite database
             self.lot_incr = []
             self.street_incr = []
             self.neigh_incr = []
@@ -771,16 +812,24 @@ class UB_Techplan(Module):
             self.wsuddata.addAttribute("MCAscore", DOUBLE, WRITE)
             self.wsuddata.addAttribute("BasinID", DOUBLE, WRITE)
             self.wsuddata.addAttribute("Location", DOUBLE, WRITE)
-            self.wsuddata.addAttribute("Scale", DOUBLE, WRITE)
-            self.wsuddata.addAttribute("Type", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("Scale", STRING, WRITE)
+            self.wsuddata.addAttribute("Type", STRING, WRITE)
             self.wsuddata.addAttribute("Qty", DOUBLE, WRITE)
             self.wsuddata.addAttribute("GoalQty", DOUBLE, WRITE)
             self.wsuddata.addAttribute("SysArea", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("StoreVol", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("StoreType", STRING, WRITE)
+            self.wsuddata.addAttribute("IntegStore", DOUBLE, WRITE)
             self.wsuddata.addAttribute("Status", DOUBLE, WRITE)
             self.wsuddata.addAttribute("Year", DOUBLE, WRITE)
             self.wsuddata.addAttribute("EAFact", DOUBLE, WRITE)
-            self.wsuddata.addAttribute("ImpT", DOUBLE, WRITE)
-            self.wsuddata.addAttribute("CurImpT", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("SvWQ_ImpT", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("SvQty_ImpT", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("SvRec_Supp", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("CurImpTWQ", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("CurImpTQty", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("CurSupply", DOUBLE, WRITE)
+            self.wsuddata.addAttribute("SupplyRel", DOUBLE, WRITE)
             self.wsuddata.addAttribute("Upgrades", DOUBLE, WRITE)
             self.wsuddata.addAttribute("EAFact", DOUBLE, WRITE)
             self.wsuddata.addAttribute("WDepth", DOUBLE, WRITE)
@@ -1345,11 +1394,11 @@ class UB_Techplan(Module):
 
             if method == "SLP":
                   a = 1.0
-                  bstrategy.setTotalMCAscore(max(0, bstrategy.getTotalMCAscore() - a* sum(dSQty, dSWQ, dSRec) * bstrategy.getTotalMCAscore()))
+                  bstrategy.setTotalMCAscore(max(0, bstrategy.getTotalMCAscore() - a* sum([dSQty, dSWQ, dSRec]) * bstrategy.getTotalMCAscore()))
             elif method == "SPP":
                   a = self.penaltyFa
                   b = self.penaltyFb
-                  bstrategy.setTotalMCAscore(max(0, bstrategy.getTotalMCAscore() - a* pow(sum(dSQty, dSWQ, dSRec),b)))
+                  bstrategy.setTotalMCAscore(max(0, bstrategy.getTotalMCAscore() - a* pow(sum([dSQty, dSWQ, dSRec]),b)))
             return True
 
 
@@ -2441,7 +2490,6 @@ class UB_Techplan(Module):
                               servicematrix[1] = Adesign_imp
                         if AsystemRecQty[0] != None:
                               servicematrix[2] = design_Dem
-                        servicematrixstring = tt.convertArrayToDBString(servicematrix)
                         sys_object = tt.WaterTech(techabbr, Asystem["Size"][0], curscale, servicematrix, Asystem["Size"][1], landuse, currentID)
                         sys_object.addRecycledStoreToTech(curstore[0], curstore[2], curstore[3], curstore[4])     #If analysis showed that system can accommodate store, add the store object
                         sys_object.setDesignIncrement(incr)
@@ -3258,7 +3306,6 @@ class UB_Techplan(Module):
                                     if blockstrat.getTotalMCAscore() > lowestscore:
                                           allInBlockOptions[servicebin].pop(lowestscoreindex)      #Pop the lowest score and replace
                                           allInBlockOptions[servicebin].append(blockstrat)
-                                          #dbs = tt.createDataBaseString(blockstrat)
                                     elif blockstrat.getTotalMCAscore() == lowestscore:
                                           if random.random() > 0.5:   #if the scores are equal: fifty-fifty chance
                                                 allInBlockOptions[servicebin].pop(lowestscoreindex)      #Pop the lowest score and replace
@@ -3618,9 +3665,7 @@ class UB_Techplan(Module):
                   remainAimp_subbasinQTY = max(totalAimpQTY - subbas_treatedAimpQTY, 0)
                   if bool(int(self.ration_runoff)) and totalAimpQTY != 0:
                         max_deg_matrix.append(remainAimp_subbasinQTY / totalAimpQTY)
-                  #else:
-                        #max_deg_matrix.append(0)
-
+                  
                   remainAimp_subbasinWQ = max(totalAimpWQ - subbas_treatedAimpWQ, 0)
                   if bool(int(self.ration_pollute)) and totalAimpWQ != 0:
                         max_deg_matrix.append(remainAimp_subbasinWQ / totalAimpWQ)
@@ -3630,7 +3675,6 @@ class UB_Techplan(Module):
                         downstreamIDs = []      #the complete matrix of all downstream IDs from all upstream sbIDs
                         for sbID in subbasinIDs:
                               totSupply += subbasID_treatedREC[sbID]      #Get total supply of all combined upstream systems
-                              #downIDs = self.retrieveStreamBlockIDs(self.getBlockUUID(sbID, city), "downstream")
                               downIDs = self.retrieveStreamBlockIDs(self.blockDict[sbID], "downstream")
                               downIDs.append(sbID)
                               for dID in downIDs:
@@ -4072,11 +4116,19 @@ class UB_Techplan(Module):
                   loc.SetField("Qty", 0)      #Currently none available
                   loc.SetField("GoalQty", goalqty)  #lot scale mainly - number of lots to build
                   loc.SetField("SysArea", current_wsud.getSize())
+                  loc.SetField("StoreVol", current_wsud.getRecycledStorageVolume())
+                  loc.SetField("StoreType", current_wsud.getRecycledStorageType())
+                  loc.SetField("IntegStore", current_wsud.isStoreIntegrated())
                   loc.SetField("Status", 0)   #0 = not built, 1 = built
                   loc.SetField("Year", 9999)
                   loc.SetField("EAFact", current_wsud.getAreaFactor())
-                  loc.SetField("ImpT", current_wsud.getService("WQ"))
-                  loc.SetField("CurImpT", 0)  #New systems don't treat anything yet, not implemented
+                  loc.SetField("SvWQ_ImpT", current_wsud.getService("WQ"))
+                  loc.SetField("SvQty_ImpT", current_wsud.getService("Qty"))
+                  loc.SetField("SvRec_Supp", current_wsud.getService("Rec"))
+                  loc.SetField("CurImpTWQ", 0)  #New systems don't treat anything yet, not implemented
+                  loc.SetField("CurImpTQty", 0) #New systems don't treat anything yet
+                  loc.SetField("CurSupply", 0) #New systems don't supply yet
+                  loc.SetField("SupplyRel", float(self.targets_reliability * self.ration_harvest))
                   loc.SetField("Upgrades", 0) #Done in the retrofit/implementation part
 
                   #Transfer the key system specs
@@ -4105,11 +4157,19 @@ class UB_Techplan(Module):
                   loc.SetField("Qty", 0)      #currently none available
                   loc.SetField("GoalQty", 1)  #lot scale mainly - number of lots to build
                   loc.SetField("SysArea", outblock_strat.getSize())
+                  loc.SetField("StoreVol", outblock_strat.getRecycledStorageVolume())
+                  loc.SetField("StoreType", outblock_strat.getRecycledStorageType())
+                  loc.SetField("IntegStore", outblock_strat.isStoreIntegrated())
                   loc.SetField("Status", 0)
                   loc.SetField("Year", 9999)
                   loc.SetField("EAFact", outblock_strat.getAreaFactor())
-                  loc.SetField("ImpT", outblock_strat.getService("WQ"))
-                  loc.SetField("CurImpT", 0)  #New systems don't treat anything yet before implemented
+                  loc.SetField("SvWQ_ImpT", outblock_strat.getService("WQ"))
+                  loc.SetField("SvQty_ImpT", outblock_strat.getService("Qty"))
+                  loc.SetField("SvRec_Supp", outblock_strat.getService("Rec"))
+                  loc.SetField("CurImpTWQ", 0)  #New systems don't treat anything yet, not implemented
+                  loc.SetField("CurImpTQty", 0) #New systems don't treat anything yet
+                  loc.SetField("CurSupply", 0) #New systems don't supply yet
+                  loc.SetField("SupplyRel", float(self.targets_reliability * self.ration_harvest))
                   loc.SetField("Upgrades", 0)
 
                   #Transfer the key system specs
@@ -4149,11 +4209,19 @@ class UB_Techplan(Module):
                   loc.SetField("Qty", curSys["Qty"])      #currently none available
                   loc.SetField("GoalQty", curSys["GoalQty"])  #lot scale mainly - number of lots to build
                   loc.SetField("SysArea", curSys["SysArea"])
+                  loc.SetField("StoreVol", curSys["StoreVol"])
+                  loc.SetField("StoreType", curSys["StoreType"])
+                  loc.SetField("IntegStore", curSys["IntegStore"])
                   loc.SetField("Status", int(curSys["Status"]))
                   loc.SetField("Year", int(curSys["Year"]))
                   loc.SetField("EAFact", curSys["EAFact"])
-                  loc.SetField("ImpT", curSys["ImpT"])
-                  loc.SetField("CurImpT", curSys["CurImpT"])  #New systems don't treat anything yet before implemented
+                  loc.SetField("SvWQ_ImpT", curSys["SvWQ_ImpT"])
+                  loc.SetField("SvQty_ImpT", curSys["SvQty_ImpT"])
+                  loc.SetField("SvRec_Supp", curSys["SvRec_Supp"])
+                  loc.SetField("CurImpTWQ", curSys["CurImpTWQ"])  #New systems don't treat anything yet, not implemented
+                  loc.SetField("CurImpTQty", curSys["CurImpTQty"]) #New systems don't treat anything yet
+                  loc.SetField("CurSupply", curSys["CurSupply"]) #New systems don't supply yet
+                  loc.SetField("SupplyRel", curSys["SupplyRel"])
                   loc.SetField("Upgrades", int(curSys["Upgrades"]))
                   loc.SetField("WDepth", curSys["WDepth"])
                   loc.SetField("FDepth", curSys["FDepth"])
