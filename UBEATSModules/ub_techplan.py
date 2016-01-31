@@ -39,8 +39,9 @@ import numpy as np
 
 #Path to the ancillary folder external files that UrbanBEATS uses to undertake the WSUD assessment
 #Includes: Design curves, rainfall data, stormwater harvesting benefits empirical relationships
-ANCILLARY_PATH = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"   #Change this path to suit
 
+#ANCILLARY_PATH = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"                                 #Old Office Computer
+ANCILLARY_PATH = "C:/Users/Peter Bach/Documents/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"       #Macbook testing
 
 class UB_Techplan(Module):
 
@@ -128,34 +129,6 @@ class UB_Techplan(Module):
             self.street_rigour = 4.0            #How many increments at street scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
             self.neigh_rigour = 4.0             #How many increments at neighbourhood scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
             self.subbas_rigour = 4.0            #How many increments at sub-basin scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
-
-            #REGIONAL RECYCLING-SUPPLY ZONES
-            self.createParameter("rec_demrange_min", DOUBLE, "")
-            self.createParameter("rec_demrange_max", DOUBLE, "")
-            self.createParameter("ww_kitchen", BOOL, "")
-            self.createParameter("ww_shower", BOOL, "")
-            self.createParameter("ww_toilet", BOOL, "")
-            self.createParameter("ww_laundry", BOOL, "")
-            self.createParameter("hs_strategy", STRING, "")
-            self.rec_demrange_min = 10.0
-            self.rec_demrange_max = 100.0
-            self.ww_kitchen = 0         #Kitchen WQ default = GW
-            self.ww_shower = 0          #Shower WQ default = GW
-            self.ww_toilet = 0          #Toilet WQ default = BW --> MUST BE RECYCLED
-            self.ww_laundry = 0         #Laundry WQ default = GW
-            self.hs_strategy = "ud"         #ud = upstream-downstream, uu = upstream-upstream, ua = upstream-around
-
-            #ADDITIONAL INPUTS
-            self.createParameter("sb_method", STRING, "")
-            self.createParameter("rain_length", DOUBLE, "")
-            self.createParameter("swh_benefits", BOOL, "")
-            self.createParameter("swh_unitrunoff", DOUBLE, "")
-            self.createParameter("swh_unitrunoff_auto", BOOL, "")
-            self.sb_method = "Sim"  #Sim = simulation, Eqn = equation
-            self.rain_length = 2.0   #number of years.
-            self.swh_benefits = 1   #execute function to calculate SWH benefits? (1 by default, but perhaps treat as mutually exclusive)
-            self.swh_unitrunoff = 0.545  #Unit runoff rate [kL/sqm impervious]
-            self.swh_unitrunoff_auto = 0
 
             ##########################################################################
             #---WATER USE EFFICIENCY AND RECYCLING STRATEGY DESIGN INPUTS            
@@ -596,31 +569,51 @@ class UB_Techplan(Module):
             self.penaltyFb = 1.2
 
 
-            self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S", 
-                    "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k", 
-                    "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU", 
-                    "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
-                    "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
-                    "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
-                    "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT",
-                    "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
-                    "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
-                    "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
-                    "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", 
-                    "LIjobs", "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
-                    "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA", 
-                    "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg", 
-                    "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA", 
-                    "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg", 
-                    "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA", 
-                    "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
-                    "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
-                    "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
-                    "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
-                    "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
-                    "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats", 
-                    "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys",
-                    "HasL_HISys", "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
+            self.createParameter("writeDebug", BOOL, "")
+            self.createParameter("debugfilepath", STRING, "")
+            self.writeDebug = 1
+            self.debugfilepath = "C:/Users/Peter Bach/Dropbox/Documents RESEARCH/Current Projects/CRC Water Sensitive Cities/A4.3 DAnCE4Water/DAnCE x UrbanBEATS Module/Verification/"
+            self.wsudDebug = []
+
+
+            # self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S", 
+            #         "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k", 
+            #         "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU", 
+            #         "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
+            #         "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
+            #         "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
+            #         "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT",
+            #         "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
+            #         "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
+            #         "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
+            #         "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", 
+            #         "LIjobs", "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
+            #         "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA", 
+            #         "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg", 
+            #         "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA", 
+            #         "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg", 
+            #         "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA", 
+            #         "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
+            #         "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
+            #         "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
+            #         "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
+            #         "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
+            #         "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats", 
+            #         "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys",
+            #         "HasL_HISys", "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
+
+            self.attnames = ["av_HDRes","avLt_COM","avLt_HI","avLt_LI","avLt_RES",
+                            "avSt_RES","BasinID","Blk_EIA","Blk_WD","BlockID",
+                            "COMAeEIA","COMestates","downID","HDR_EIA",
+                            "HDRRoofA","HIAeEIA","HIestates","LIAeEIA","LIestates",
+                            "Outlet","PG_av","REF_av","ResAllots","ResFrontT",
+                            "ResHouses","ResLotEIA","ResRoof","Soil_k","Status",
+                            "SVU_avSW","SVU_avWS","SVU_avWW","wd_HDR_I","wd_HDR_K",
+                            "wd_HDR_L","wd_HDR_S","wd_HDR_T","wd_Nres_IN","wd_PubOUT",
+                            "wd_RES_I","wd_RES_K","wd_RES_L","wd_RES_S","wd_RES_T", "HasRes", 
+                            "HasHouses", "HasFlats", "Has_LI", "Has_Com", "Has_HI", "Has_ORC", 
+                            "HasL_RESSys", "HasL_HDRSys", "HasL_LISys", "HasL_HISys", 
+                            "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
 
             self.blockDict = {}
             self.blockIDlist = []
@@ -634,159 +627,168 @@ class UB_Techplan(Module):
             #Data Stream Definition
             self.regiondata = ViewContainer("regiondata", COMPONENT, READ)
             self.regiondata.addAttribute("NumBlocks", DOUBLE, READ)
-            self.regiondata.addAttribute("BlockSize", DOUBLE, READ)
             self.regiondata.addAttribute("TotalBasins", DOUBLE, READ)
 
             self.blockdata = ViewContainer("blockdata", COMPONENT, READ)
             self.blockdata.addAttribute("BlockID", DOUBLE, READ)
             self.blockdata.addAttribute("BasinID", DOUBLE, READ)
             self.blockdata.addAttribute("Status", DOUBLE, READ)
-            self.blockdata.addAttribute("Active", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_N", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_S", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_W", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_E", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_NE", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_NW", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_SE", DOUBLE, READ)
-            self.blockdata.addAttribute("Nhd_SW", DOUBLE, READ)
+            # self.blockdata.addAttribute("Active", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_N", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_S", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_W", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_E", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_NE", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_NW", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_SE", DOUBLE, READ)
+            # self.blockdata.addAttribute("Nhd_SW", DOUBLE, READ)
             self.blockdata.addAttribute("Soil_k", DOUBLE, READ)
-            self.blockdata.addAttribute("AvgElev", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_RES", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_COM", DOUBLE, READ)   #commercial & offices
-            self.blockdata.addAttribute("pLU_LI", DOUBLE, READ)    #light & heavy industry
-            self.blockdata.addAttribute("pLU_CIV", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_SVU", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_RD", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_TR", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_PG", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_REF", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_UND", DOUBLE, READ)
-            self.blockdata.addAttribute("pLU_NA", DOUBLE, READ)
-            self.blockdata.addAttribute("Pop", DOUBLE, READ)
+            # self.blockdata.addAttribute("AvgElev", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_RES", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_COM", DOUBLE, READ)   #commercial & offices
+            # self.blockdata.addAttribute("pLU_LI", DOUBLE, READ)    #light & heavy industry
+            # self.blockdata.addAttribute("pLU_CIV", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_SVU", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_RD", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_TR", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_PG", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_REF", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_UND", DOUBLE, READ)
+            # self.blockdata.addAttribute("pLU_NA", DOUBLE, READ)
+            # self.blockdata.addAttribute("Pop", DOUBLE, READ)
             self.blockdata.addAttribute("downID", DOUBLE, READ)
             self.blockdata.addAttribute("Outlet", DOUBLE, READ)
-            self.blockdata.addAttribute("MiscAtot", DOUBLE, READ)
-            self.blockdata.addAttribute("OpenSpace", DOUBLE, READ)
-            self.blockdata.addAttribute("AGardens", DOUBLE, READ)
-            self.blockdata.addAttribute("ASquare", DOUBLE, READ)
+            # self.blockdata.addAttribute("MiscAtot", DOUBLE, READ)
+            # self.blockdata.addAttribute("OpenSpace", DOUBLE, READ)
+            # self.blockdata.addAttribute("AGardens", DOUBLE, READ)
+            # self.blockdata.addAttribute("ASquare", DOUBLE, READ)
             self.blockdata.addAttribute("PG_av", DOUBLE, READ)
             self.blockdata.addAttribute("REF_av", DOUBLE, READ)
-            self.blockdata.addAttribute("ANonW_Util", DOUBLE, READ)
+            # self.blockdata.addAttribute("ANonW_Util", DOUBLE, READ)
             self.blockdata.addAttribute("SVU_avWS", DOUBLE, READ)
             self.blockdata.addAttribute("SVU_avWW", DOUBLE, READ)
             self.blockdata.addAttribute("SVU_avSW", DOUBLE, READ)
-            self.blockdata.addAttribute("SVU_avOTH", DOUBLE, READ)
-            self.blockdata.addAttribute("RoadTIA", DOUBLE, READ)
-            self.blockdata.addAttribute("RD_av", DOUBLE, READ)
-            self.blockdata.addAttribute("RDMedW", DOUBLE, READ)
-            self.blockdata.addAttribute("DemPublicI", DOUBLE, READ)
+            # self.blockdata.addAttribute("SVU_avOTH", DOUBLE, READ)
+            # self.blockdata.addAttribute("RoadTIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("RD_av", DOUBLE, READ)
+            # self.blockdata.addAttribute("RDMedW", DOUBLE, READ)
+            # self.blockdata.addAttribute("DemPublicI", DOUBLE, READ)
             self.blockdata.addAttribute("HasHouses", DOUBLE, READ)
-            self.blockdata.addAttribute("HouseOccup", DOUBLE, READ)
+            # self.blockdata.addAttribute("HouseOccup", DOUBLE, READ)
             self.blockdata.addAttribute("ResFrontT", DOUBLE, READ)
             self.blockdata.addAttribute("avSt_RES", DOUBLE, READ)
-            self.blockdata.addAttribute("WResNstrip", DOUBLE, READ)
+            # self.blockdata.addAttribute("WResNstrip", DOUBLE, READ)
             self.blockdata.addAttribute("ResAllots", DOUBLE, READ)
-            self.blockdata.addAttribute("ResDWpLot", DOUBLE, READ)
+            # self.blockdata.addAttribute("ResDWpLot", DOUBLE, READ)
             self.blockdata.addAttribute("ResHouses", DOUBLE, READ)
-            self.blockdata.addAttribute("ResLotArea", DOUBLE, READ)
-            self.blockdata.addAttribute("ResRoof", DOUBLE, READ)
+            # self.blockdata.addAttribute("ResLotArea", DOUBLE, READ)
+            # self.blockdata.addAttribute("ResRoof", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_RES", DOUBLE, READ)
-            self.blockdata.addAttribute("ResLotTIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("ResLotTIA", DOUBLE, READ)
             self.blockdata.addAttribute("ResLotEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("ResGarden", DOUBLE, READ)
-            self.blockdata.addAttribute("DemPrivI", DOUBLE, READ)
-            self.blockdata.addAttribute("ResRoofCon", DOUBLE, READ)
+            # self.blockdata.addAttribute("ResGarden", DOUBLE, READ)
+            # self.blockdata.addAttribute("DemPrivI", DOUBLE, READ)
+            # self.blockdata.addAttribute("ResRoofCon", DOUBLE, READ)
             self.blockdata.addAttribute("HasFlats", DOUBLE, READ)
-            self.blockdata.addAttribute("HDRFlats", DOUBLE, READ)
+            # self.blockdata.addAttribute("HDRFlats", DOUBLE, READ)
             self.blockdata.addAttribute("HDRRoofA", DOUBLE, READ)
-            self.blockdata.addAttribute("HDROccup", DOUBLE, READ)
-            self.blockdata.addAttribute("HDR_TIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("HDROccup", DOUBLE, READ)
+            # self.blockdata.addAttribute("HDR_TIA", DOUBLE, READ)
             self.blockdata.addAttribute("HDR_EIA", DOUBLE, READ)
-            self.blockdata.addAttribute("HDRFloors", DOUBLE, READ)
+            # self.blockdata.addAttribute("HDRFloors", DOUBLE, READ)
             self.blockdata.addAttribute("av_HDRes", DOUBLE, READ)
-            self.blockdata.addAttribute("HDRGarden", DOUBLE, READ)
-            self.blockdata.addAttribute("HDRCarPark", DOUBLE, READ)
-            self.blockdata.addAttribute("DemAptI", DOUBLE, READ)
+            # self.blockdata.addAttribute("HDRGarden", DOUBLE, READ)
+            # self.blockdata.addAttribute("HDRCarPark", DOUBLE, READ)
+            # self.blockdata.addAttribute("DemAptI", DOUBLE, READ)
             self.blockdata.addAttribute("Has_LI", DOUBLE, READ)
-            self.blockdata.addAttribute("LIjobs", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIjobs", DOUBLE, READ)
             self.blockdata.addAttribute("LIestates", DOUBLE, READ)
-            self.blockdata.addAttribute("avSt_LI", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAfront", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAfrEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAestate", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAeBldg", DOUBLE, READ)
-            self.blockdata.addAttribute("LIFloors", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAeLoad", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAeCPark", DOUBLE, READ)
+            # self.blockdata.addAttribute("avSt_LI", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAfront", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAfrEIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAestate", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAeBldg", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIFloors", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAeLoad", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAeCPark", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_LI", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAeLgrey", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("LIAeEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("LIAeTIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("LIAeTIA", DOUBLE, READ)
             self.blockdata.addAttribute("Has_HI", DOUBLE, READ)
-            self.blockdata.addAttribute("HIjobs", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIjobs", DOUBLE, READ)
             self.blockdata.addAttribute("HIestates", DOUBLE, READ)
-            self.blockdata.addAttribute("avSt_HI", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAfront", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAfrEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAestate", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAeBldg", DOUBLE, READ)
-            self.blockdata.addAttribute("HIFloors", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAeLoad", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAeCPark", DOUBLE, READ)
+            # self.blockdata.addAttribute("avSt_HI", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAfront", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAfrEIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAestate", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAeBldg", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIFloors", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAeLoad", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAeCPark", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_HI", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAeLgrey", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("HIAeEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("HIAeTIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("HIAeTIA", DOUBLE, READ)
             self.blockdata.addAttribute("Has_Com", DOUBLE, READ)
-            self.blockdata.addAttribute("COMjobs", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMjobs", DOUBLE, READ)
             self.blockdata.addAttribute("COMestates", DOUBLE, READ)
-            self.blockdata.addAttribute("avSt_COM", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAfront", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAfrEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAestate", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAeBldg", DOUBLE, READ)
-            self.blockdata.addAttribute("COMFloors", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAeLoad", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAeCPark", DOUBLE, READ)
+            # self.blockdata.addAttribute("avSt_COM", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAfront", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAfrEIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAestate", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAeBldg", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMFloors", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAeLoad", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAeCPark", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_COM", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAeLgrey", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("COMAeEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("COMAeTIA", DOUBLE, READ)
-            self.blockdata.addAttribute("Has_ORC", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCjobs", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCestates", DOUBLE, READ)
-            self.blockdata.addAttribute("avSt_ORC", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAfront", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAfrEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAestate", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAeBldg", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCFloors", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAeLoad", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAeCPark", DOUBLE, READ)
-            self.blockdata.addAttribute("avLt_ORC", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAeLgrey", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAeEIA", DOUBLE, READ)
-            self.blockdata.addAttribute("ORCAeTIA", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_TIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("COMAeTIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("Has_ORC", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCjobs", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCestates", DOUBLE, READ)
+            # self.blockdata.addAttribute("avSt_ORC", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAfront", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAfrEIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAestate", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAeBldg", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCFloors", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAeLoad", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAeCPark", DOUBLE, READ)
+            # self.blockdata.addAttribute("avLt_ORC", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAeLgrey", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAeEIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("ORCAeTIA", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_TIA", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_EIA", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_EIF", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_TIF", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_RoofsA", DOUBLE, READ)
-            self.blockdata.addAttribute("wd_PrivIN", DOUBLE, READ)
-            self.blockdata.addAttribute("wd_PrivOUT", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_EIF", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_TIF", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_RoofsA", DOUBLE, READ)
+            # self.blockdata.addAttribute("wd_PrivIN", DOUBLE, READ)
+            # self.blockdata.addAttribute("wd_PrivOUT", DOUBLE, READ)
             self.blockdata.addAttribute("wd_Nres_IN", DOUBLE, READ)
-            self.blockdata.addAttribute("Apub_irr", DOUBLE, READ)
+            # self.blockdata.addAttribute("Apub_irr", DOUBLE, READ)
             self.blockdata.addAttribute("wd_PubOUT", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_RES_K", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_RES_S", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_RES_T", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_RES_L", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_RES_I", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_HDR_K", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_HDR_S", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_HDR_T", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_HDR_L", DOUBLE, READ)
+            self.blockdata.addAttribute("wd_HDR_I", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_WD", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Kitch", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Shower", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Toilet", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Laund", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Garden", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Com", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_Ind", DOUBLE, READ)
-            self.blockdata.addAttribute("Blk_PubIrr", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Kitch", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Shower", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Toilet", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Laund", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Garden", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Com", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_Ind", DOUBLE, READ)
+            # self.blockdata.addAttribute("Blk_PubIrr", DOUBLE, READ)
             self.blockdata.addAttribute("HasL_RESSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasL_HDRSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasL_LISys", DOUBLE, READ)
@@ -795,17 +797,6 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("HasSSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasNSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasBSys", DOUBLE, READ)
-
-            # self.blockdata.addAttribute("wd_RES_K", DOUBLE, READ)       #[kL/day]
-            # self.blockdata.addAttribute("wd_RES_S", DOUBLE, READ)        #[kL/day]
-            # self.blockdata.addAttribute("wd_RES_T", DOUBLE, READ)        #[kL/day]
-            # self.blockdata.addAttribute("wd_RES_L", DOUBLE, READ)       #[kL/day]
-            # self.blockdata.addAttribute("wd_RES_I", DOUBLE, READ) 
-            # self.blockdata.addAttribute("wd_HDR_K", DOUBLE, READ)       #[kL/day]
-            # self.blockdata.addAttribute("wd_HDR_S", DOUBLE, READ)        #[kL/day]
-            # self.blockdata.addAttribute("wd_HDR_T", DOUBLE, READ)        #[kL/day]
-            # self.blockdata.addAttribute("wd_HDR_L", DOUBLE, READ)       #[kL/day]
-            # self.blockdata.addAttribute("wd_HDR_I", DOUBLE, READ)    #[kL/day]
 
             self.wsuddata = ViewContainer("wsuddata", COMPONENT, WRITE)
             self.wsuddata.addAttribute("StrategyID", DOUBLE, WRITE)
@@ -910,7 +901,6 @@ class UB_Techplan(Module):
 
             #GET NECESSARY GLOBAL DATA TO DO ANALYSIS
             blocks_num = mapdata.GetFieldAsInteger("NumBlocks")     #number of blocks to loop through
-            self.block_size = mapdata.GetFieldAsDouble("BlockSize")    #size of block
             basins = mapdata.GetFieldAsInteger("TotalBasins")
             
             #CREATE TECHNOLOGIES SHORTLIST - THIS IS THE USER'S CUSTOMISED SHORTLIST
@@ -1142,12 +1132,12 @@ class UB_Techplan(Module):
                         #print "Basin ID: ", currentBasinID, " has no remaining service requirements, skipping!"
                         print "Transferring existing systems across"
                         for stratnum in range(int(self.num_output_strats)):
-                              self.transferExistingSystemsToOutput(int(stratnum+1)), 0, currentBasinID)
+                              self.transferExistingSystemsToOutput(int(stratnum+1), 0, currentBasinID)
                         continue
                   if sum(updatedService) == 0:
                         print "Transferring existing systems across"
                         for stratnum in range(int(self.num_output_strats)):
-                              self.transferExistingSystemsToOutput(int(stratnum+1)), 0, currentBasinID)
+                              self.transferExistingSystemsToOutput(int(stratnum+1), 0, currentBasinID)
                         continue
 
 
@@ -1170,8 +1160,7 @@ class UB_Techplan(Module):
                                  [basinRemainQTY, basinRemainWQ, basinRemainREC])
 
                         #Populate Basin Management Strategy Object based on the current sampled values
-                        self.populateBasinWithTech(current_bstrategy, subbas_chosenIDs, inblocks_chosenIDs,
-                        inblock_options, subbas_options, basinBlockIDs)
+                        self.populateBasinWithTech(current_bstrategy, subbas_chosenIDs, inblocks_chosenIDs, inblock_options, subbas_options, basinBlockIDs)
 
                         tt.updateBasinService(current_bstrategy)
                         #print current_bstrategy.getSubbasinArray()
@@ -1242,7 +1231,6 @@ class UB_Techplan(Module):
                         stratID = j+1
                         self.writeStrategyView(stratID, currentBasinID, basinBlockIDs, cur_strat)
                         self.transferExistingSystemsToOutput(stratID, cur_strat[1], currentBasinID)
-                        self.writeDebugTable(stratID, currentBasinID, basinBlockIDs, cur_strat)
 
                   #Clear the array and garbage collect
                   basin_strategies = []
@@ -1251,6 +1239,7 @@ class UB_Techplan(Module):
                   gc.collect()
                   #END OF BASIN LOOP, continues to next basin
 
+            self.writeDebugTable()
             self.wsuddata.finalise()
             #END OF MODULE
 
@@ -3195,7 +3184,6 @@ class UB_Techplan(Module):
             """
             allInBlockOptions = {}      #Initialize dictionary to hold all in-block options
             currentID = int(currentAttList["BlockID"])
-            blockarea = pow(self.block_size, 2) * currentAttList["Active"]
 
             for i in range(len(self.subbas_incr)):                #e.g. for [0, 0.25, 0.5, 0.75, 1.0]
                   allInBlockOptions[self.subbas_incr[i]] = []       #Bins are: 0 to 25%, >25% to 50%, >50% to 75%, >75% to 100% of block treatment
@@ -3528,7 +3516,7 @@ class UB_Techplan(Module):
             options arrays. Returns an updated current_bstrategy object completed with all details.
             """
             partakeIDs = current_bstrategy.getSubbasPartakeIDs()    #returned in order upstream-->downstream
-            basintotals = current_strategy.getBasinTotalValues()
+            basintotals = current_bstrategy.getBasinTotalValues()
 
             if len(partakeIDs) == 0:
                   subbas_treatedAimpQTY = 0  #Sum of already treated imp area in upstream sub-basins and the now planned treatment
@@ -3947,126 +3935,153 @@ class UB_Techplan(Module):
       ####################################
       #--- TRANSFER OF DATA TO OUTPUT ---#
       ####################################
-      def writeDebugTable(self, id, basinID, basinBlockIDs, strategydata):
-            """Writes the strategy attribute table as a .csv file for debugging and post-processing
-            This is a debug function only.
-            """
-            f = open("D:/Debug_basin"+str(basinID)+"_"+str(id)+".csv", 'w')
-            f.write("StrategyID, MCAScore, BasinID, Location, Scale, Type, Qty, GoalQty, SysArea, Status, Year, EAFact, ImpT, CurImpT, Upgrades, WDepth, FDepth, Exfil, \n")
+      def writeDebugTable(self):
+            """Writes all strategies to a single .csv file"""
+            print "Transferring outputs"
+            print self.wsudDebug
+            f = open(self.debugfilepath+"Debug.csv", 'w')
+            
+            attnames = self.wsudDebug[0].keys()
+            headerline = ""
+            for i in range(len(attnames)):
+                  headerline += attnames[i]+","
+            headerline += "\n"
+            f.write(headerline)
 
-            strat_object = strategydata[0]
-            strat_score = strategydata[1]
-
-            for i in range(len(basinBlockIDs)):
-                  currentID = basinBlockIDs[i]
-                  currentAttList = self.blockDict[currentID]
-                  
-                  #Grab the strategy objects
-                  inblock_strat = strat_object.getIndividualTechStrat(currentID, "b")
-
-                  if inblock_strat == None:
-                        inblock_systems = [0,0,0,0,0,0,0]
-                        inblock_degs = [0,0,0,0,0,0,0]
-                        inblock_lotcount = [0,0,0,0,0,0,0]
-                  else:
-                        inblock_systems = inblock_strat.getTechnologies()
-                        inblock_degs = [0,0,0,0,0,0,0]
-                        inblock_lotcount = inblock_strat.getQuantity("all")
-
-                  for j in range(len(inblock_systems)):
-                        if inblock_systems[j] != 0:
-                              inblock_degs[j] = inblock_systems[j].getDesignIncrement()
-
-                  blockscale_names = ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]
-
-                  for j in range(len(blockscale_names)):
-                        if inblock_strat == None or inblock_systems[j] == 0:
-                              continue
-                        current_wsud = inblock_systems[j]
-                        scale = blockscale_names[j]
-                        
-                        goalqty = inblock_lotcount[j]
-
-                        datastring = ""
-                        datastring += str(id)+","           #StrategyID
-                        datastring += str(strat_score)+","  #MCAScore
-                        datastring += str(basinID)+","      #BasinID
-                        datastring += str(currentID)+","    #Location
-                        datastring += str(scale)+","                    #Scale
-                        datastring += str(current_wsud.getType())+","   #Type
-                        datastring += str(0)+","            #Qty
-                        datastring += str(goalqty)+","      #GoalQty
-                        datastring += str(current_wsud.getSize())+","   #SysArea
-                        datastring += str(0)+","    #Status
-                        datastring += str(9999)+","   #Year
-                        datastring += str(current_wsud.getAreaFactor())+"," #EAFACT
-                        datastring += str(current_wsud.getService("WQ"))+","  #ImpT
-                        datastring += str(0)+","      #CurImpT
-                        datastring += str(0)+","      #Upgrades
-
-                        #Transfer the key system specs
-                        if current_wsud.getType() in ["BF", "IS", "WSUR"]:
-                              datastring += str(float(eval("self."+str(current_wsud.getType())+"spec_EDD")))+","
-                        elif current_wsud.getType() in ["PB"]:
-                              datastring += str(float(eval("self."+str(current_wsud.getType())+"spec_MD")))+","
+            for i in range(len(self.wsudDebug)):
+                  curdata = self.wsudDebug[i]
+                  dataline = ""
+                  for j in range(len(attnames)):
+                        if attnames[j] not in curdata.keys():
+                              dataline += "0.00,"
                         else:
-                              datastring += str(0)+","      #All other systems - WDepth = 0
-
-                        if current_wsud.getType() in ["BF", "IS"]:
-                              datastring += str(eval("self."+str(current_wsud.getType())+"spec_FD"))+","    #FDepth
-                        else:
-                              datastring += str(0)+","      #All other systems - FDepth = 0
-
-                        if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
-                              datastring += str(eval("self."+str(current_wsud.getType())+"exfil"))+", \n"
-                        else:
-                              datastring += str(0)+", \n"
-
-                        f.write(datastring)
-
-                  outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
-                  if outblock_strat != None:
-                        scale = "B"
-                        
-                        datastring = ""
-                        datastring += str(id)+","           #StrategyID
-                        datastring += str(strat_score)+","  #MCAScore
-                        datastring += str(basinID)+","      #BasinID
-                        datastring += str(currentID)+","    #Location
-                        datastring += str(scale)+","                    #Scale
-                        datastring += str(outblock_strat.getType())+","   #Type
-                        datastring += str(0)+","            #Qty
-                        datastring += str(1)+","      #GoalQty
-                        datastring += str(outblock_strat.getSize())+","   #SysArea
-                        datastring += str(0)+","    #Status
-                        datastring += str(9999)+","   #Year
-                        datastring += str(outblock_strat.getAreaFactor())+"," #EAFACT
-                        datastring += str(outblock_strat.getService("WQ"))+","  #ImpT
-                        datastring += str(0)+","      #CurImpT
-                        datastring += str(0)+","      #Upgrades
-
-                        #Transfer the key system specs
-                        if current_wsud.getType() in ["BF", "IS", "WSUR"]:
-                              datastring += str(eval("self."+str(outblock_strat.getType())+"spec_EDD"))+","
-                        elif current_wsud.getType() in ["PB"]:
-                              datastring += str(eval("self."+str(outblock_strat.getType())+"spec_MD"))+","
-                        else:
-                              datastring += str(0)+","      #All other systems - WDepth = 0
-
-                        if current_wsud.getType() in ["BF", "IS"]:
-                              datastring += str(eval("self."+str(outblock_strat.getType())+"spec_FD"))+","    #FDepth
-                        else:
-                              datastring += str(0)+","      #All other systems - FDepth = 0
-
-                        if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
-                              datastring += str(eval("self."+str(outblock_strat.getType())+"exfil"))+", \n"
-                        else:
-                              datastring += str(0)+", \n"
-
-                        f.write(datastring)
+                              dataline += str(curdata[attnames[j]])+","
+                  dataline += "\n"
+                  f.write(dataline)
 
             f.close()
             return True
+
+      # def writeDebugTable(self, id, basinID, basinBlockIDs, strategydata):
+      #       """Writes the strategy attribute table as a .csv file for debugging and post-processing
+      #       This is a debug function only.
+      #       """
+      #       f = open("D:/Debug_basin"+str(basinID)+"_"+str(id)+".csv", 'w')
+      #       f.write("StrategyID, MCAScore, BasinID, Location, Scale, Type, Qty, GoalQty, SysArea, Status, Year, EAFact, ImpT, CurImpT, Upgrades, WDepth, FDepth, Exfil, \n")
+
+      #       strat_object = strategydata[0]
+      #       strat_score = strategydata[1]
+
+      #       for i in range(len(basinBlockIDs)):
+      #             currentID = basinBlockIDs[i]
+      #             currentAttList = self.blockDict[currentID]
+                  
+      #             #Grab the strategy objects
+      #             inblock_strat = strat_object.getIndividualTechStrat(currentID, "b")
+
+      #             if inblock_strat == None:
+      #                   inblock_systems = [0,0,0,0,0,0,0]
+      #                   inblock_degs = [0,0,0,0,0,0,0]
+      #                   inblock_lotcount = [0,0,0,0,0,0,0]
+      #             else:
+      #                   inblock_systems = inblock_strat.getTechnologies()
+      #                   inblock_degs = [0,0,0,0,0,0,0]
+      #                   inblock_lotcount = inblock_strat.getQuantity("all")
+
+      #             for j in range(len(inblock_systems)):
+      #                   if inblock_systems[j] != 0:
+      #                         inblock_degs[j] = inblock_systems[j].getDesignIncrement()
+
+      #             blockscale_names = ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]
+
+      #             for j in range(len(blockscale_names)):
+      #                   if inblock_strat == None or inblock_systems[j] == 0:
+      #                         continue
+      #                   current_wsud = inblock_systems[j]
+      #                   scale = blockscale_names[j]
+                        
+      #                   goalqty = inblock_lotcount[j]
+
+      #                   datastring = ""
+      #                   datastring += str(id)+","           #StrategyID
+      #                   datastring += str(strat_score)+","  #MCAScore
+      #                   datastring += str(basinID)+","      #BasinID
+      #                   datastring += str(currentID)+","    #Location
+      #                   datastring += str(scale)+","                    #Scale
+      #                   datastring += str(current_wsud.getType())+","   #Type
+      #                   datastring += str(0)+","            #Qty
+      #                   datastring += str(goalqty)+","      #GoalQty
+      #                   datastring += str(current_wsud.getSize())+","   #SysArea
+      #                   datastring += str(0)+","    #Status
+      #                   datastring += str(9999)+","   #Year
+      #                   datastring += str(current_wsud.getAreaFactor())+"," #EAFACT
+      #                   datastring += str(current_wsud.getService("WQ"))+","  #ImpT
+      #                   datastring += str(0)+","      #CurImpT
+      #                   datastring += str(0)+","      #Upgrades
+
+      #                   #Transfer the key system specs
+      #                   if current_wsud.getType() in ["BF", "IS", "WSUR"]:
+      #                         datastring += str(float(eval("self."+str(current_wsud.getType())+"spec_EDD")))+","
+      #                   elif current_wsud.getType() in ["PB"]:
+      #                         datastring += str(float(eval("self."+str(current_wsud.getType())+"spec_MD")))+","
+      #                   else:
+      #                         datastring += str(0)+","      #All other systems - WDepth = 0
+
+      #                   if current_wsud.getType() in ["BF", "IS"]:
+      #                         datastring += str(eval("self."+str(current_wsud.getType())+"spec_FD"))+","    #FDepth
+      #                   else:
+      #                         datastring += str(0)+","      #All other systems - FDepth = 0
+
+      #                   if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+      #                         datastring += str(eval("self."+str(current_wsud.getType())+"exfil"))+", \n"
+      #                   else:
+      #                         datastring += str(0)+", \n"
+
+      #                   f.write(datastring)
+
+      #             outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
+      #             if outblock_strat != None:
+      #                   scale = "B"
+                        
+      #                   datastring = ""
+      #                   datastring += str(id)+","           #StrategyID
+      #                   datastring += str(strat_score)+","  #MCAScore
+      #                   datastring += str(basinID)+","      #BasinID
+      #                   datastring += str(currentID)+","    #Location
+      #                   datastring += str(scale)+","                    #Scale
+      #                   datastring += str(outblock_strat.getType())+","   #Type
+      #                   datastring += str(0)+","            #Qty
+      #                   datastring += str(1)+","      #GoalQty
+      #                   datastring += str(outblock_strat.getSize())+","   #SysArea
+      #                   datastring += str(0)+","    #Status
+      #                   datastring += str(9999)+","   #Year
+      #                   datastring += str(outblock_strat.getAreaFactor())+"," #EAFACT
+      #                   datastring += str(outblock_strat.getService("WQ"))+","  #ImpT
+      #                   datastring += str(0)+","      #CurImpT
+      #                   datastring += str(0)+","      #Upgrades
+
+      #                   #Transfer the key system specs
+      #                   if current_wsud.getType() in ["BF", "IS", "WSUR"]:
+      #                         datastring += str(eval("self."+str(outblock_strat.getType())+"spec_EDD"))+","
+      #                   elif current_wsud.getType() in ["PB"]:
+      #                         datastring += str(eval("self."+str(outblock_strat.getType())+"spec_MD"))+","
+      #                   else:
+      #                         datastring += str(0)+","      #All other systems - WDepth = 0
+
+      #                   if current_wsud.getType() in ["BF", "IS"]:
+      #                         datastring += str(eval("self."+str(outblock_strat.getType())+"spec_FD"))+","    #FDepth
+      #                   else:
+      #                         datastring += str(0)+","      #All other systems - FDepth = 0
+
+      #                   if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+      #                         datastring += str(eval("self."+str(outblock_strat.getType())+"exfil"))+", \n"
+      #                   else:
+      #                         datastring += str(0)+", \n"
+
+      #                   f.write(datastring)
+
+      #       f.close()
+      #       return True
 
 
 
@@ -4099,90 +4114,189 @@ class UB_Techplan(Module):
 
                   blockscale_names = ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM", "S", "N"]
 
-            for j in range(len(blockscale_names)):
-                  if inblock_strat == None or inblock_systems[j] == 0:
-                        continue
-                  current_wsud = inblock_systems[j]
-                  scale = blockscale_names[j]
-                  goalqty = inblock_lotcount[j]
+                  for j in range(len(blockscale_names)):
+                        if inblock_strat == None or inblock_systems[j] == 0:
+                              continue
+                        current_wsud = inblock_systems[j]
+                        scale = blockscale_names[j]
+                        goalqty = inblock_lotcount[j]
 
-                  loc = self.wsuddata.create_feature()
-                  loc.SetField("StrategyID", id)
-                  loc.SetField("MCAscore", strat_score)
-                  loc.SetField("BasinID", basinID)
-                  loc.SetField("Location", currentID)
-                  loc.SetField("Scale", scale)
-                  loc.SetField("Type", current_wsud.getType())
-                  loc.SetField("Qty", 0)      #Currently none available
-                  loc.SetField("GoalQty", goalqty)  #lot scale mainly - number of lots to build
-                  loc.SetField("SysArea", current_wsud.getSize())
-                  loc.SetField("StoreVol", current_wsud.getRecycledStorageVolume())
-                  loc.SetField("StoreType", current_wsud.getRecycledStorageType())
-                  loc.SetField("IntegStore", current_wsud.isStoreIntegrated())
-                  loc.SetField("Status", 0)   #0 = not built, 1 = built
-                  loc.SetField("Year", 9999)
-                  loc.SetField("EAFact", current_wsud.getAreaFactor())
-                  loc.SetField("SvWQ_ImpT", current_wsud.getService("WQ"))
-                  loc.SetField("SvQty_ImpT", current_wsud.getService("Qty"))
-                  loc.SetField("SvRec_Supp", current_wsud.getService("Rec"))
-                  loc.SetField("CurImpTWQ", 0)  #New systems don't treat anything yet, not implemented
-                  loc.SetField("CurImpTQty", 0) #New systems don't treat anything yet
-                  loc.SetField("CurSupply", 0) #New systems don't supply yet
-                  loc.SetField("SupplyRel", float(self.targets_reliability * self.ration_harvest))
-                  loc.SetField("Upgrades", 0) #Done in the retrofit/implementation part
+                        #DEBUG
+                        stratDict = {}
+                        stratDict["StrategyID"] = id
+                        stratDict["MCAscore"] = strat_score
+                        stratDict["BasinID"] = basinID
+                        stratDict["Location"] = currentID
+                        stratDict["Scale"] = scale
+                        stratDict["Type"] = current_wsud.getType()
+                        stratDict["Qty"] = 0      #Currently none available
+                        stratDict["GoalQty"] = goalqty  #lot scale mainly - number of lots to build
+                        stratDict["SysArea"] = current_wsud.getSize()
+                        stratDict["StoreVol"] = current_wsud.getRecycledStorageVolume()
+                        stratDict["StoreType"] = current_wsud.getRecycledStorageType()
+                        stratDict["IntegStore"] = current_wsud.isStoreIntegrated()
+                        stratDict["Status"] = 0   #0 = not built] = 1 = built
+                        stratDict["Year"] = 9999
+                        stratDict["EAFact"] = current_wsud.getAreaFactor()
+                        stratDict["SvWQ_ImpT"] = current_wsud.getService("WQ")
+                        stratDict["SvQty_ImpT"] = current_wsud.getService("Qty")
+                        stratDict["SvRec_Supp"] = current_wsud.getService("Rec")
+                        stratDict["CurImpTWQ"] = 0  #New systems don't treat anything yet] = not implemented
+                        stratDict["CurImpTQty"] = 0 #New systems don't treat anything yet
+                        stratDict["CurSupply"] = 0 #New systems don't supply yet
+                        stratDict["SupplyRel"] = float(self.targets_reliability * self.ration_harvest)
+                        stratDict["Upgrades"] = 0 #Done in the retrofit/implementation part
+                        #DEBUG END
 
-                  #Transfer the key system specs
-                  if current_wsud.getType() in ["BF", "IS", "WSUR"]:
-                        loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_EDD"))
-                  if current_wsud.getType() in ["PB"]:
-                        loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_MD"))
-                  if current_wsud.getType() in ["BF", "IS"]:
-                        loc.SetField("FDepth", eval("self."+str(current_wsud.getType())+"spec_FD"))
-                  if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
-                        loc.SetField("Exfil", eval("self."+str(current_wsud.getType())+"exfil"))
-                  else:
-                        loc.SetField("Exfil", 0)
+                        loc = self.wsuddata.create_feature()
+                        loc.SetField("StrategyID", id)
+                        loc.SetField("MCAscore", strat_score)
+                        loc.SetField("BasinID", basinID)
+                        loc.SetField("Location", currentID)
+                        loc.SetField("Scale", scale)
+                        loc.SetField("Type", current_wsud.getType())
+                        loc.SetField("Qty", 0)      #Currently none available
+                        loc.SetField("GoalQty", goalqty)  #lot scale mainly - number of lots to build
+                        loc.SetField("SysArea", current_wsud.getSize())
+                        loc.SetField("StoreVol", current_wsud.getRecycledStorageVolume())
+                        loc.SetField("StoreType", current_wsud.getRecycledStorageType())
+                        loc.SetField("IntegStore", current_wsud.isStoreIntegrated())
+                        loc.SetField("Status", 0)   #0 = not built, 1 = built
+                        loc.SetField("Year", 9999)
+                        loc.SetField("EAFact", current_wsud.getAreaFactor())
+                        loc.SetField("SvWQ_ImpT", current_wsud.getService("WQ"))
+                        loc.SetField("SvQty_ImpT", current_wsud.getService("Qty"))
+                        loc.SetField("SvRec_Supp", current_wsud.getService("Rec"))
+                        loc.SetField("CurImpTWQ", 0)  #New systems don't treat anything yet, not implemented
+                        loc.SetField("CurImpTQty", 0) #New systems don't treat anything yet
+                        loc.SetField("CurSupply", 0) #New systems don't supply yet
+                        loc.SetField("SupplyRel", float(self.targets_reliability * self.ration_harvest))
+                        loc.SetField("Upgrades", 0) #Done in the retrofit/implementation part
 
-            outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
-            if outblock_strat != None:
-                  scale = "B"
+                        #Transfer the key system specs
+                        if current_wsud.getType() in ["BF", "IS", "WSUR"]:
+                              loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_EDD"))
 
-                  loc = self.wsuddata.create_feature()
-                  loc.SetField("StrategyID", id)
-                  loc.SetField("MCAscore", strat_score)
-                  loc.SetField("BasinID", basinID)
-                  loc.SetField("Location", currentID)
-                  loc.SetField("Scale", scale)
-                  loc.SetField("Type", outblock_strat.getType())
-                  loc.SetField("Qty", 0)      #currently none available
-                  loc.SetField("GoalQty", 1)  #lot scale mainly - number of lots to build
-                  loc.SetField("SysArea", outblock_strat.getSize())
-                  loc.SetField("StoreVol", outblock_strat.getRecycledStorageVolume())
-                  loc.SetField("StoreType", outblock_strat.getRecycledStorageType())
-                  loc.SetField("IntegStore", outblock_strat.isStoreIntegrated())
-                  loc.SetField("Status", 0)
-                  loc.SetField("Year", 9999)
-                  loc.SetField("EAFact", outblock_strat.getAreaFactor())
-                  loc.SetField("SvWQ_ImpT", outblock_strat.getService("WQ"))
-                  loc.SetField("SvQty_ImpT", outblock_strat.getService("Qty"))
-                  loc.SetField("SvRec_Supp", outblock_strat.getService("Rec"))
-                  loc.SetField("CurImpTWQ", 0)  #New systems don't treat anything yet, not implemented
-                  loc.SetField("CurImpTQty", 0) #New systems don't treat anything yet
-                  loc.SetField("CurSupply", 0) #New systems don't supply yet
-                  loc.SetField("SupplyRel", float(self.targets_reliability * self.ration_harvest))
-                  loc.SetField("Upgrades", 0)
+                              #DEBUG
+                              stratDict["WDepth"] = eval("self."+str(current_wsud.getType())+"spec_EDD")
+                              #DEBUG
+                        if current_wsud.getType() in ["PB"]:
+                              loc.SetField("WDepth", eval("self."+str(current_wsud.getType())+"spec_MD"))
 
-                  #Transfer the key system specs
-                  if outblock_strat.getType() in ["BF", "IS", "WSUR"]:
-                        loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_EDD"))
-                  if outblock_strat.getType() in ["PB"]:
-                        loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_MD"))
-                  if outblock_strat.getType() in ["BF", "IS"]:
-                        loc.SetField("FDepth", eval("self."+str(outblock_strat.getType())+"spec_FD"))
-                  if outblock_strat.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
-                        loc.SetField("Exfil", eval("self."+str(outblock_strat.getType())+"exfil"))
-                  else:
-                        loc.SetField("Exfil", 0)
+                              #DEBUG
+                              stratDict["WDepth"] = eval("self."+str(current_wsud.getType())+"spec_MD")
+                              #DEBUG
+                        if current_wsud.getType() in ["BF", "IS"]:
+                              loc.SetField("FDepth", eval("self."+str(current_wsud.getType())+"spec_FD"))
+
+                              #DEBUG
+                              stratDict["FDepth"] = eval("self."+str(current_wsud.getType())+"spec_FD")
+                              #DEBUG
+                        if current_wsud.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+                              loc.SetField("Exfil", eval("self."+str(current_wsud.getType())+"exfil"))
+
+                              #DEBUG
+                              stratDict["Exfil"] = eval("self."+str(current_wsud.getType())+"exfil")
+                              #DEBUG
+                        else:
+                              loc.SetField("Exfil", 0)
+
+                              #DEBUG
+                              stratDict["Exfil"] = 0.00
+                              #DEBUG
+
+                        self.wsudDebug.append(stratDict)
+
+                  outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
+                  if outblock_strat != None:
+                        scale = "B"
+
+                        #DEBUG
+                        stratDict = {}
+                        stratDict["StrategyID"] = id
+                        stratDict["MCAscore"] = strat_score
+                        stratDict["BasinID"] = basinID
+                        stratDict["Location"] = currentID
+                        stratDict["Scale"] = scale
+                        stratDict["Type"] = outblock_strat.getType()
+                        stratDict["Qty"] = 0      #Currently none available
+                        stratDict["GoalQty"] = 1
+                        stratDict["SysArea"] = outblock_strat.getSize()
+                        stratDict["StoreVol"] = outblock_strat.getRecycledStorageVolume()
+                        stratDict["StoreType"] = outblock_strat.getRecycledStorageType()
+                        stratDict["IntegStore"] = outblock_strat.isStoreIntegrated()
+                        stratDict["Status"] = 0   #0 = not built] = 1 = built
+                        stratDict["Year"] = 9999
+                        stratDict["EAFact"] = outblock_strat.getAreaFactor()
+                        stratDict["SvWQ_ImpT"] = outblock_strat.getService("WQ")
+                        stratDict["SvQty_ImpT"] = outblock_strat.getService("Qty")
+                        stratDict["SvRec_Supp"] = outblock_strat.getService("Rec")
+                        stratDict["CurImpTWQ"] = 0  #New systems don't treat anything yet] = not implemented
+                        stratDict["CurImpTQty"] = 0 #New systems don't treat anything yet
+                        stratDict["CurSupply"] = 0 #New systems don't supply yet
+                        stratDict["SupplyRel"] = float(self.targets_reliability * self.ration_harvest)
+                        stratDict["Upgrades"] = 0 #Done in the retrofit/implementation part
+                        #DEBUG END
+
+                        loc = self.wsuddata.create_feature()
+                        loc.SetField("StrategyID", id)
+                        loc.SetField("MCAscore", strat_score)
+                        loc.SetField("BasinID", basinID)
+                        loc.SetField("Location", currentID)
+                        loc.SetField("Scale", scale)
+                        loc.SetField("Type", outblock_strat.getType())
+                        loc.SetField("Qty", 0)      #currently none available
+                        loc.SetField("GoalQty", 1)  #lot scale mainly - number of lots to build
+                        loc.SetField("SysArea", outblock_strat.getSize())
+                        loc.SetField("StoreVol", outblock_strat.getRecycledStorageVolume())
+                        loc.SetField("StoreType", outblock_strat.getRecycledStorageType())
+                        loc.SetField("IntegStore", outblock_strat.isStoreIntegrated())
+                        loc.SetField("Status", 0)
+                        loc.SetField("Year", 9999)
+                        loc.SetField("EAFact", outblock_strat.getAreaFactor())
+                        loc.SetField("SvWQ_ImpT", outblock_strat.getService("WQ"))
+                        loc.SetField("SvQty_ImpT", outblock_strat.getService("Qty"))
+                        loc.SetField("SvRec_Supp", outblock_strat.getService("Rec"))
+                        loc.SetField("CurImpTWQ", 0)  #New systems don't treat anything yet, not implemented
+                        loc.SetField("CurImpTQty", 0) #New systems don't treat anything yet
+                        loc.SetField("CurSupply", 0) #New systems don't supply yet
+                        loc.SetField("SupplyRel", float(self.targets_reliability * self.ration_harvest))
+                        loc.SetField("Upgrades", 0)
+
+                        #Transfer the key system specs
+                        if outblock_strat.getType() in ["BF", "IS", "WSUR"]:
+                              loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_EDD"))
+
+                              #DEBUG
+                              stratDict["WDepth"] = eval("self."+str(outblock_strat.getType())+"spec_EDD")
+                              #DEBUG
+                        if outblock_strat.getType() in ["PB"]:
+                              loc.SetField("WDepth", eval("self."+str(outblock_strat.getType())+"spec_MD"))
+
+                              #DEBUG
+                              stratDict["WDepth"] = eval("self."+str(outblock_strat.getType())+"spec_MD")
+                              #DEBUG
+
+                        if outblock_strat.getType() in ["BF", "IS"]:
+                              loc.SetField("FDepth", eval("self."+str(outblock_strat.getType())+"spec_FD"))
+
+                              #DEBUG
+                              stratDict["FDepth"] = eval("self."+str(outblock_strat.getType())+"spec_FD")
+                              #DEBUG
+                        if outblock_strat.getType() in ["BF", "SW", "IS", "WSUR", "PB"]:
+                              loc.SetField("Exfil", eval("self."+str(outblock_strat.getType())+"exfil"))
+
+                              #DEBUG
+                              stratDict["Exfil"] = eval("self."+str(outblock_strat.getType())+"exfil")
+                              #DEBUG
+                        else:
+                              loc.SetField("Exfil", 0)
+
+                              #DEBUG
+                              stratDict["Exfil"] = 0.00
+                              #DEBUG
+                        self.wsudDebug.append(stratDict)
+
             return True
 
       def transferExistingSystemsToOutput(self, stratID, score, basinID):
@@ -4199,6 +4313,38 @@ class UB_Techplan(Module):
                         continue        #RemoveComponent only removes the components, not the UUID, must therefore catch this
                   if int(curSys.getAttribute("BasinID")) != int(basinID):
                         continue        #If the system is not in the current basin, don't transfer it yet.
+                  
+                  #DEBUG
+                  stratDict = {}
+                  stratDict["StrategyID"] = stratID
+                  stratDict["MCAscore"] = score
+                  stratDict["BasinID"] = int(curSys["BasinID"])
+                  stratDict["Location"] = int(curSys["Location"])
+                  stratDict["Scale"] = curSys["Scale"]
+                  stratDict["Type"] = curSys["Type"]
+                  stratDict["Qty"] = curSys["Qty"]     #currently none available
+                  stratDict["GoalQty"] = curSys["GoalQty"]
+                  stratDict["SysArea"] = curSys["SysArea"]
+                  stratDict["StoreVol"] = curSys["StoreVol"]
+                  stratDict["StoreType"] = curSys["StoreType"]
+                  stratDict["IntegStore"] = curSys["IntegStore"]
+                  stratDict["Status"] = int(curSys["Status"])
+                  stratDict["Year"] = int(curSys["Year"])
+                  stratDict["EAFact"] = curSys["EAFact"]
+                  stratDict["SvWQ_ImpT"] = curSys["SvWQ_ImpT"]
+                  stratDict["SvQty_ImpT"] = curSys["SvQty_ImpT"]
+                  stratDict["SvRec_Supp"] = curSys["SvRec_Supp"]
+                  stratDict["CurImpTWQ"] = curSys["CurImpTWQ"] #New systems don't treat anything yet] = not implemented
+                  stratDict["CurImpTQty"] = curSys["CurImpTQty"] #New systems don't treat anything yet
+                  stratDict["CurSupply"] = curSys["CurSupply"] #New systems don't supply yet
+                  stratDict["SupplyRel"] = curSys["SupplyRel"]
+                  stratDict["Upgrades"] = int(curSys["Upgrades"])
+                  stratDict["WDepth"] = curSys["WDepth"]
+                  stratDict["FDepth"] = curSys["FDepth"]
+                  stratDict["Exfil"] = curSys["Exfil"]
+                  self.wsudDebug.append(stratDict)
+                  #DEBUG END
+
                   loc = self.wsuddata.create_feature()   #Create a new placeholder for a component object, save it to self.wsudAttr View
                   loc.SetField("StrategyID", stratID)
                   loc.SetField("MCAscore", score)
