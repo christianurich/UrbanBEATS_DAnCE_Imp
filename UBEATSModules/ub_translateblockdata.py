@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 """
 @file
@@ -36,38 +36,39 @@ class UB_TranslateBlockData(Module):
 
             #To use the GDAL API
             self.setIsGDALModule(True)
-            
+
             #Parameter Definition
             self.createParameter("fullfilepath", STRING, "Path to test .csv file")
-            self.fullfilepath = "C:/Users/Peter Bach/Dropbox/Documents RESEARCH/Current Projects/CRC Water Sensitive Cities/A4.3 DAnCE4Water/DAnCE x UrbanBEATS Module/Verification/Casey Clyde Test 1\caseyClydeTest1.csv"
+            #self.fullfilepath = "C:/Users/Peter Bach/Dropbox/Documents RESEARCH/Current Projects/CRC Water Sensitive Cities/A4.3 DAnCE4Water/DAnCE x UrbanBEATS Module/Verification/Casey Clyde Test 1/caseyClydeTest1.csv"
+            self.fullfilepath = "C:/Users/petermbach/Dropbox/Documents RESEARCH/Current Projects/CRC Water Sensitive Cities/A4.3 DAnCE4Water/DAnCE x UrbanBEATS Module/Verification/filename.csv"
 
-            # self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S", 
-            #         "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k", 
-            #         "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU", 
-            #         "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
-            #         "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
-            #         "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
-            #         "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT", 
-            #         "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
-            #         "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
-            #         "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
-            #         "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", "LIjobs", 
-            #         "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
-            #         "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA", 
-            #         "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg", 
-            #         "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA", 
-            #         "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg", 
-            #         "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA", 
-            #         "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
-            #         "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
-            #         "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
-            #         "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
-            #         "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
+            # self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S",
+            #         "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k",
+            #         "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU",
+            #         "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop",
+            #         "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare",
+            #         "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW",
+            #         "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT",
+            #         "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea",
+            #         "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI",
+            #         "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA",
+            #         "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", "LIjobs",
+            #         "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg",
+            #         "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA",
+            #         "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg",
+            #         "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA",
+            #         "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg",
+            #         "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA",
+            #         "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA",
+            #         "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM",
+            #         "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF",
+            #         "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr",
+            #         "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund",
             #         "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr"]
 
             self.attnames = ["av_HDRes","avLt_COM","avLt_HI","avLt_LI","avLt_RES",
                             "avSt_RES","BasinID","Blk_EIA","Blk_WD","BlockID",
-                            "COMAeEIA","COMestates","downID","HDR_EIA",
+                            "COMAeEIA","COMestates","downID","HDRFlats", "HDR_EIA",
                             "HDRRoofA","HIAeEIA","HIestates","LIAeEIA","LIestates",
                             "Outlet","PG_av","REF_av","ResAllots","ResFrontT",
                             "ResHouses","ResLotEIA","ResRoof","Soil_k","Status",
@@ -76,7 +77,7 @@ class UB_TranslateBlockData(Module):
                             "wd_RES_I","wd_RES_K","wd_RES_L","wd_RES_S","wd_RES_T"]
 
         def init(self):
-            
+
             #Data Stream Definition
             self.regiondata = ViewContainer("regiondata", COMPONENT, WRITE)
             self.regiondata.addAttribute("NumBlocks", DOUBLE, WRITE)
@@ -144,7 +145,7 @@ class UB_TranslateBlockData(Module):
             # self.blockdata.addAttribute("DemPrivI", DOUBLE, WRITE)
             # self.blockdata.addAttribute("ResRoofCon", DOUBLE, WRITE)
             self.blockdata.addAttribute("HasFlats", DOUBLE, WRITE)
-            # self.blockdata.addAttribute("HDRFlats", DOUBLE, WRITE)
+            self.blockdata.addAttribute("HDRFlats", DOUBLE, WRITE)
             self.blockdata.addAttribute("HDRRoofA", DOUBLE, WRITE)
             # self.blockdata.addAttribute("HDROccup", DOUBLE, WRITE)
             # self.blockdata.addAttribute("HDR_TIA", DOUBLE, WRITE)
@@ -251,10 +252,10 @@ class UB_TranslateBlockData(Module):
             self.blockdata.addAttribute("HasSSys", DOUBLE, WRITE)
             self.blockdata.addAttribute("HasNSys", DOUBLE, WRITE)
             self.blockdata.addAttribute("HasBSys", DOUBLE, WRITE)
-         
+
             self.registerViewContainers([self.blockdata, self.regiondata])
 
-			
+
         def run(self):
             #Data Stream Manipulation
             datadict = self.loadFileTESTFILE()
@@ -304,7 +305,7 @@ class UB_TranslateBlockData(Module):
                 blockcomp.SetField("HasSSys", 0)
                 blockcomp.SetField("HasNSys", 0)
                 blockcomp.SetField("HasBSys", 0)
-                
+
             self.regiondata.finalise()
             self.blockdata.finalise()
 
@@ -344,6 +345,5 @@ class UB_TranslateBlockData(Module):
                         datadict[attlist[j]].append(float(dataline[j]))
                     except:
                         datadict[attlist[j]].append(dataline[j])
-            
+
             return datadict
-            

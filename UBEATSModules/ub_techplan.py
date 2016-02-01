@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 """
 @file
 @author  Peter M Bach <peterbach@gmail.com>
@@ -41,7 +41,8 @@ import numpy as np
 #Includes: Design curves, rainfall data, stormwater harvesting benefits empirical relationships
 
 #ANCILLARY_PATH = "D:/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"                                 #Old Office Computer
-ANCILLARY_PATH = "C:/Users/Peter Bach/Documents/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"       #Macbook testing
+#ANCILLARY_PATH = "C:/Users/Peter Bach/Documents/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"       #Macbook testing
+ANCILLARY_PATH = "C:/Users/petermbach/Documents/Coding Projects/UrbanBEATS_DAnCE_Imp/ancillary"         #Office iMac
 
 class UB_Techplan(Module):
 
@@ -53,7 +54,7 @@ class UB_Techplan(Module):
             #Parameter Definition
 
             ##########################################################################
-            #---DESIGN CRITERIA INPUTS                                               
+            #---DESIGN CRITERIA INPUTS
             ##########################################################################
 
             #DESIGN RATIONALE SETTINGS
@@ -125,13 +126,13 @@ class UB_Techplan(Module):
             self.strategy_street_check = 1      #Plan technologies at Street scale?
             self.strategy_neigh_check = 1       #Plan technologies at Neighbourhood scale?
             self.strategy_subbas_check = 1      #Plan technologies at Sub-basin scale?
-            self.lot_rigour = 4.0               #How many increments at lot scale? (4 = 0, 0.25, 0.5, 0.75, 1.0) 
+            self.lot_rigour = 4.0               #How many increments at lot scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
             self.street_rigour = 4.0            #How many increments at street scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
             self.neigh_rigour = 4.0             #How many increments at neighbourhood scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
             self.subbas_rigour = 4.0            #How many increments at sub-basin scale? (4 = 0, 0.25, 0.5, 0.75, 1.0)
 
             ##########################################################################
-            #---WATER USE EFFICIENCY AND RECYCLING STRATEGY DESIGN INPUTS            
+            #---WATER USE EFFICIENCY AND RECYCLING STRATEGY DESIGN INPUTS
             ##########################################################################
 
             #WATER DEMAND PATTERNS
@@ -174,7 +175,7 @@ class UB_Techplan(Module):
             self.swh_unitrunoff_auto = 0
 
             ##########################################################################
-            #---RETROFIT CONDITIONS INPUTS                                           
+            #---RETROFIT CONDITIONS INPUTS
             ##########################################################################
 
             #SCENARIO DESCRIPTION
@@ -222,7 +223,7 @@ class UB_Techplan(Module):
             self.renewal_alternative = "K"          #if renewal cannot be done, what to do then? K=Keep, D=Decommission
 
             ##########################################################################
-            #---TECHNOLOGIES LIST AND CUSTOMIZATION                                  
+            #---TECHNOLOGIES LIST AND CUSTOMIZATION
             ##########################################################################
 
             #---BIOFILTRATION SYSTEM/RAINGARDEN [BF]--------------------------------
@@ -401,7 +402,7 @@ class UB_Techplan(Module):
             self.createParameter("WSURminsize", DOUBLE, "")
             self.createParameter("WSURmaxsize", DOUBLE,"")
             self.createParameter("WSURavglife", DOUBLE,"")
-            self.createParameter("WSURexfil", DOUBLE, "") 
+            self.createParameter("WSURexfil", DOUBLE, "")
             self.WSURspec_EDD = "0.75"
             self.WSURminsize = 200.0
             self.WSURmaxsize = 9999999.0           #maximum surface area of system in sqm
@@ -442,7 +443,7 @@ class UB_Techplan(Module):
             self.SWminsize = 20.0
             self.SWmaxsize = 9999.0           #maximum surface area of system in sqm
             self.SWavglife = 20.0             #average life span of a swale
-            self.SWexfil = 3.6              
+            self.SWexfil = 3.6
 
             #---REGIONAL INFORMATION -----------------------------------------------
             self.createParameter("regioncity", STRING,"")
@@ -507,9 +508,9 @@ class UB_Techplan(Module):
             ########################################################################
             #---ADVANCED PARAMETERS & VARIABLES
             ########################################################################
-            self.technames = ["ASHP", "AQ", "ASR", "BF", "GR", "GT", 
-                          "GPT", "IS", "PPL", "PB", "PP", "RT", 
-                          "SF", "IRR", "WSUB", "WSUR", "SW", 
+            self.technames = ["ASHP", "AQ", "ASR", "BF", "GR", "GT",
+                          "GPT", "IS", "PPL", "PB", "PP", "RT",
+                          "SF", "IRR", "WSUB", "WSUR", "SW",
                           "TPS", "UT", "WWRR", "WT"]
 
             self.scaleabbr = ["lot", "street", "neigh", "prec"]
@@ -576,43 +577,43 @@ class UB_Techplan(Module):
             self.wsudDebug = []
 
 
-            # self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S", 
-            #         "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k", 
-            #         "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU", 
-            #         "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop", 
-            #         "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare", 
-            #         "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW", 
+            # self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S",
+            #         "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k",
+            #         "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU",
+            #         "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop",
+            #         "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare",
+            #         "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW",
             #         "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT",
-            #         "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea", 
-            #         "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI", 
-            #         "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA", 
-            #         "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI", 
-            #         "LIjobs", "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg", 
-            #         "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA", 
-            #         "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg", 
-            #         "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA", 
-            #         "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg", 
-            #         "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA", 
-            #         "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA", 
-            #         "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM", 
-            #         "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF", 
-            #         "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr", 
-            #         "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund", 
-            #         "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats", 
+            #         "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea",
+            #         "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI",
+            #         "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA",
+            #         "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI",
+            #         "LIjobs", "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg",
+            #         "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA",
+            #         "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg",
+            #         "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA",
+            #         "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg",
+            #         "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA",
+            #         "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA",
+            #         "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM",
+            #         "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF",
+            #         "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr",
+            #         "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund",
+            #         "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats",
             #         "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys",
             #         "HasL_HISys", "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
 
             self.attnames = ["av_HDRes","avLt_COM","avLt_HI","avLt_LI","avLt_RES",
                             "avSt_RES","BasinID","Blk_EIA","Blk_WD","BlockID",
-                            "COMAeEIA","COMestates","downID","HDR_EIA",
+                            "COMAeEIA","COMestates","downID","HDRFlats", "HDR_EIA",
                             "HDRRoofA","HIAeEIA","HIestates","LIAeEIA","LIestates",
                             "Outlet","PG_av","REF_av","ResAllots","ResFrontT",
                             "ResHouses","ResLotEIA","ResRoof","Soil_k","Status",
                             "SVU_avSW","SVU_avWS","SVU_avWW","wd_HDR_I","wd_HDR_K",
                             "wd_HDR_L","wd_HDR_S","wd_HDR_T","wd_Nres_IN","wd_PubOUT",
-                            "wd_RES_I","wd_RES_K","wd_RES_L","wd_RES_S","wd_RES_T", "HasRes", 
-                            "HasHouses", "HasFlats", "Has_LI", "Has_Com", "Has_HI", "Has_ORC", 
-                            "HasL_RESSys", "HasL_HDRSys", "HasL_LISys", "HasL_HISys", 
+                            "wd_RES_I","wd_RES_K","wd_RES_L","wd_RES_S","wd_RES_T", "HasRes",
+                            "HasHouses", "HasFlats", "Has_LI", "Has_Com", "Has_HI", "Has_ORC",
+                            "HasL_RESSys", "HasL_HDRSys", "HasL_LISys", "HasL_HISys",
                             "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
 
             self.blockDict = {}
@@ -690,7 +691,7 @@ class UB_Techplan(Module):
             # self.blockdata.addAttribute("DemPrivI", DOUBLE, READ)
             # self.blockdata.addAttribute("ResRoofCon", DOUBLE, READ)
             self.blockdata.addAttribute("HasFlats", DOUBLE, READ)
-            # self.blockdata.addAttribute("HDRFlats", DOUBLE, READ)
+            self.blockdata.addAttribute("HDRFlats", DOUBLE, READ)
             self.blockdata.addAttribute("HDRRoofA", DOUBLE, READ)
             # self.blockdata.addAttribute("HDROccup", DOUBLE, READ)
             # self.blockdata.addAttribute("HDR_TIA", DOUBLE, READ)
@@ -826,7 +827,7 @@ class UB_Techplan(Module):
             self.wsuddata.addAttribute("WDepth", DOUBLE, WRITE)
             self.wsuddata.addAttribute("FDepth", DOUBLE, WRITE)
             self.wsuddata.addAttribute("Exfil", DOUBLE, WRITE)
-            
+
             views = []
             views.append(self.regiondata)
             views.append(self.blockdata)
@@ -841,7 +842,7 @@ class UB_Techplan(Module):
             #-------------------------------------------------------------------------------------------------------
             #Retrieve data to work with - NOTE THIS NEEDS TO BE REPLACED WITH WHATEVER DAnCE wants to implement
             self.regiondata.reset_reading()
-            
+
             for r in self.regiondata:
                   mapdata = r
 
@@ -852,7 +853,7 @@ class UB_Techplan(Module):
                   self.blockDict[curID] = {}
                   for key in self.attnames:
                         self.blockDict[curID][key] = block.GetFieldAsDouble(key)
-            #End Result is a dictionary of dictionaries. Each key in the outer dictionary represents a BlocKID, each 
+            #End Result is a dictionary of dictionaries. Each key in the outer dictionary represents a BlocKID, each
             #key in the inner dictionary represents the attributes of that block
             #---------------------------------------------------------------------------------------------------------
 
@@ -874,11 +875,11 @@ class UB_Techplan(Module):
             ##          >C.4 - Construct In-block Options
             ##
             ################################################################################
-            
+
 
             ###-------------------------------------------------------------------###
             #--- SECTION ! - Pre-Processing
-            ###-------------------------------------------------------------------###        
+            ###-------------------------------------------------------------------###
 
             #CALCULATE SOME GLOBAL VARIABLES RELATING TO TARGETS
             self.system_tarQ = self.ration_runoff * self.targets_runoff     #Runoff reduction target
@@ -889,10 +890,10 @@ class UB_Techplan(Module):
 
             self.targetsvector = [self.system_tarQ, self.system_tarTSS, self.system_tarTP, self.system_tarTN, self.system_tarREL]
             print self.targetsvector      #-> targetsvector TO BE USED TO ASSESS OPPORTUNITIES
-            
+
             self.servicevector = [self.service_swmQty, self.service_swmWQ, self.service_rec]
             print self.servicevector
-            
+
             #CALCULATE SYSTEM DEPTHS
             self.sysdepths = {"RT": self.RT_maxdepth - self.RT_mindead, "WSUR": self.WSURspec_EDD, "PB": self.PBspec_MD}
 
@@ -902,7 +903,7 @@ class UB_Techplan(Module):
             #GET NECESSARY GLOBAL DATA TO DO ANALYSIS
             blocks_num = mapdata.GetFieldAsInteger("NumBlocks")     #number of blocks to loop through
             basins = mapdata.GetFieldAsInteger("TotalBasins")
-            
+
             #CREATE TECHNOLOGIES SHORTLIST - THIS IS THE USER'S CUSTOMISED SHORTLIST
             userTechList = self.compileUserTechList()               #holds the active technologies selected by user for simulation
             print userTechList
@@ -930,7 +931,7 @@ class UB_Techplan(Module):
             print self.mca_soc
 
             #Calculate MCA weightings for different PURPOSES - used to penalize MCA score if tech does not meet particular purpose
-            self.priorities = [int(self.ration_runoff)*float(self.runoff_pri), 
+            self.priorities = [int(self.ration_runoff)*float(self.runoff_pri),
                            int(self.ration_pollute)*float(self.pollute_pri),
                            int(self.ration_harvest)*float(self.harvest_pri)]
             prioritiessum = sum(self.priorities)
@@ -975,7 +976,7 @@ class UB_Techplan(Module):
             for currentID in self.blockDict.keys():
                   self.blockIDlist.append(int(self.blockDict[currentID]["BlockID"]))
                   self.downIDlist.append(int(self.blockDict[currentID]["downID"]))
-                  
+
             ###-------------------------------------------------------------------###
             #---  SECTION B - RETROFIT ALGORITHM
             ###-------------------------------------------------------------------###
@@ -996,9 +997,9 @@ class UB_Techplan(Module):
                   curSys = sysIDs[i]
                   locate = int(curSys["Location"])
                   system_list[locate].append(curSys)  #Block ID [5], [curSys, curSys, curSys]
-            
+
             print system_list
-            
+
             #Do the retrofitting
             for currentID in self.blockDict.keys():
                   currentAttList = self.blockDict[currentID]
@@ -1044,8 +1045,8 @@ class UB_Techplan(Module):
                   #Initialize meteorological data vectors: Load rainfile and evaporation files,
                   #create the scaling factors for evap data
                   print "Loading Climate Data... "
-                  self.raindata = ubseries.loadClimateFile(self.rainfile, "csv", self.rain_dt, 1440, self.rain_length)
-                  self.evapdata = ubseries.loadClimateFile(self.evapfile, "csv", self.evap_dt, 1440, self.rain_length)
+                  self.raindata = ubseries.loadClimateFile(ANCILLARY_PATH+"/"+self.rainfile, "csv", self.rain_dt, 1440, self.rain_length)
+                  self.evapdata = ubseries.loadClimateFile(ANCILLARY_PATH+"/"+self.evapfile, "csv", self.evap_dt, 1440, self.rain_length)
                   self.evapscale = ubseries.convertVectorToScalingFactors(self.evapdata)
                   self.raindata = ubseries.removeDateStampFromSeries(self.raindata)             #Remove the date stamps
 
@@ -1069,7 +1070,7 @@ class UB_Techplan(Module):
                   neigh_tech = [0]
                   subbas_tech = {}        #Initialised as empty
 
-                  
+
                         #---- C.3.1 -- Assess Lot Opportunities -----------------------------
 
                   if len(techListLot) != 0:
@@ -1077,7 +1078,7 @@ class UB_Techplan(Module):
                         #print lot_techRES
                         #print lot_techHDR
                         #print lot_techLI
-                        #print lot_techHI 
+                        #print lot_techHI
                         #print lot_techCOM
 
                         #---- C.3.2 -- Assess Street Opportunities --------------------------
@@ -1145,7 +1146,7 @@ class UB_Techplan(Module):
 
                   if len(basinBlockIDs) == 1: #if we are dealing with a single-block basin, reduce the number of iterations
                         iterations = self.maxMCiterations/10        #If only one block in basin, do different/smaller number of iterations
-                  
+
                   #Begin Monte Carlo
                   basin_strategies = []
                   for iteration in range(int(iterations)):   #1000 monte carlo simulations
@@ -1184,12 +1185,12 @@ class UB_Techplan(Module):
                   print basin_strategies
                   acceptable_options = []
                   for j in range(len(basin_strategies)):
-                        if basin_strategies[j][0] < 0:  
+                        if basin_strategies[j][0] < 0:
                               continue    #if the OF is <0 i.e. -1, skip
                         else:
                               acceptable_options.append(basin_strategies[j])
                   print acceptable_options
-                  
+
                   if self.ranktype == "RK":
                         acceptable_options = acceptable_options[0:int(self.topranklimit)]
                   elif self.ranktype == "CI":
@@ -1225,7 +1226,7 @@ class UB_Techplan(Module):
                   if len(final_selection) == 0:
                         self.transferExistingSystemsToOutput(1, 0, currentBasinID)
                         #If there are no additional plans, just tranfer systems across, only one output as StrategyID1
-                        
+
                   for j in range(len(final_selection)):       #Otherwise it'll loop
                         cur_strat = final_selection[j]
                         stratID = j+1
@@ -1249,7 +1250,7 @@ class UB_Techplan(Module):
       ######################################
       def compileUserTechList(self):
             """Compiles a dictionary of the technologies the user should use and at
-            what scales these different technologies should be used. Results are 
+            what scales these different technologies should be used. Results are
             presented as a dictionary:
             userTechList = { "TechAbbreviation" : [boolean, boolean, boolean, boolean], }
                             each boolean corresponds to one of the four scales in the order
@@ -1269,7 +1270,7 @@ class UB_Techplan(Module):
                               except AttributeError:
                                     pass
             return userTechList
-    
+
 
       def fillScaleTechList(self, scale, userTechList):
             """Returns a vector of tech abbreviations for a given scale of application
@@ -1304,7 +1305,7 @@ class UB_Techplan(Module):
             """
             mca_scoringmatrix, mca_tech, mca_env, mca_ecn, mca_soc = [], [], [] ,[] ,[]
             if self.scoringmatrix_default:
-                  mca_fname = ANCILLARY_PATH+"/mcadefault.csv"  #uses UBEATS default matrix           
+                  mca_fname = ANCILLARY_PATH+"/mcadefault.csv"  #uses UBEATS default matrix
             else:
                   mca_fname = self.scoringmatrix_path #loads file
 
@@ -1419,7 +1420,7 @@ class UB_Techplan(Module):
                   "Environ", "ENVIRON", "environ", "Environment", "ENVIRONMENT",
                   "environment", "Environmental", "ENVIRONMENTAL", "environmental"]
             ecnstrings = ["Ec", "EC", "ec", "Ecn", "ECN", "ecn", "Econ", "ECON", "econ",
-                  "Economic", "ECONOMIC", "economic", "Economics", "ECONOMICS", 
+                  "Economic", "ECONOMIC", "economic", "Economics", "ECONOMICS",
                   "economics", "Economical", "ECONOMICAL", "economical"]
             socstrings = ["So", "SO", "so", "Soc", "SOC", "soc", "Social", "SOCIAL", "social",
                   "Society", "SOCIETY", "society", "Socio", "SOCIO", "socio", "Societal",
@@ -1477,9 +1478,9 @@ class UB_Techplan(Module):
       def retrofit_DoNothing(self, ID, sys_implement):
             """Implements the "DO NOTHING" Retrofit Scenario across the entire map Do Nothing:
             Technologies already in place will be left as is
-            - The impervious area they already treat will be removed from the outstanding impervious 
+            - The impervious area they already treat will be removed from the outstanding impervious
             area to be treated
-            - The Block will be marked at the corresponding scale as "occupied" so that techopp 
+            - The Block will be marked at the corresponding scale as "occupied" so that techopp
             functions cannot place anything there ('no space case')
             """
             print "Block: "+str(ID)
@@ -1541,8 +1542,8 @@ class UB_Techplan(Module):
                   sys_descr["ImpT"] = subbasimptreated
                   sys_descr["CurImpT"] = subbasimptreated * sys_descr["Qty"]
             return True
-          
-    
+
+
       def retrofit_Forced(self, ID, sys_implement):
             """Implements the "FORCED" Retrofit Scenario across the entire map
             Forced: Technologies at the checked scales are retrofitted depending on the three
@@ -1700,11 +1701,10 @@ class UB_Techplan(Module):
                         #>>>>self.activesim.removeAssetByName("SysPrevID"+str(sys_descr["SysID"]))
             return True
 
-
       def retrofit_WithRenewal(self, ID, sys_implement):
-            """Implements the "WITH RENEWAL" Retrofit Scenario across the entire map
+            """Implements the WITH RENEWAL Retrofit Scenario across the entire map
             With Renewal: Technologies at different scales are selected for retrofitting
-            depending on the block's age and renewal cycles configured by the user
+            depending on the block age and renewal cycles configured by the user
             - Technologies are first considered for keeping, upgrading or decommissioning
             - Keep: impervious area they already treat will be removed from the outstanding
             impervious area to be treated and that scale in said Block marked as 'taken'
@@ -1712,7 +1712,7 @@ class UB_Techplan(Module):
             is assessed and then implemented. Same procedures as for Keep are subsequently
             carried out with the new design
             - Decommission: technology is removed from the area, impervious area is freed up
-            scale in said block is marked as 'available'"""
+            scale in said block is marked as available"""
 
             time_passed = self.currentyear - self.prevyear
 
@@ -1880,7 +1880,7 @@ class UB_Techplan(Module):
                               svu_space = currentAttList["SVU_avWW"]
                         else:
                               svu_space = 0
-                        
+
                         avlSpace = currentAttList["PG_av"] + currentAttList["REF_av"] + svu_space
                         if newAsys > avlSpace and self.renewal_alternative == "K": #if system does not fit and alternative is 'Keep'
                               print "Cannot fit new system design, keeping old design instead"
@@ -1993,9 +1993,9 @@ class UB_Techplan(Module):
             """
 
             currentID = int(currentAttList["BlockID"])
-            scalecheck = [[self.lot_renew, self.lot_decom], 
-                        [self.street_renew, self.street_decom], 
-                        [self.neigh_renew, self.neigh_decom], 
+            scalecheck = [[self.lot_renew, self.lot_decom],
+                        [self.street_renew, self.street_decom],
+                        [self.neigh_renew, self.neigh_decom],
                         [self.prec_renew, self.prec_decom]]
 
             if scale in ["L_RES", "L_HDR", "L_LI", "L_HI", "L_COM"]:
@@ -2054,7 +2054,7 @@ class UB_Techplan(Module):
             ### MAKE FINAL DECISION ###
             #print decision_matrix
             final_decision = max(decision_matrix)           #worst-case chosen, i.e. maximum
-            
+
             return final_decision, new_imp
 
 
@@ -2085,7 +2085,7 @@ class UB_Techplan(Module):
             purpose = [0, tech_applications[1], 0]
 
             #Call the design function using eval, due to different system Types
-            newdesign = eval('td.design_'+str(wtype)+'('+str(originalAimpTreated)+',"'+str(dcvpath)+'",'+str(self.targetsvector)+','+str(purpose)+','+str(soilK)+','+str(systemK)+','+str(minsize)+','+str(maxsize)+')')    
+            newdesign = eval('td.design_'+str(wtype)+'('+str(originalAimpTreated)+',"'+str(dcvpath)+'",'+str(self.targetsvector)+','+str(purpose)+','+str(soilK)+','+str(systemK)+','+str(minsize)+','+str(maxsize)+')')
 
             Anewsystem = newdesign[0]
             newEAFactor = newdesign[1]
@@ -2215,11 +2215,11 @@ class UB_Techplan(Module):
 
             #Check first if there are lot-stuff to work with
             hasHouses = int(currentAttList["HasHouses"]) * int(self.service_res)
-            lot_avail_sp = currentAttList["avLt_RES"] * int(self.service_res)        
+            lot_avail_sp = currentAttList["avLt_RES"] * int(self.service_res)
             Aimplot = currentAttList["ResLotEIA"]          #effective impervious area of one residential allotment
 
             hasApts = int(currentAttList["HasFlats"]) * int(self.service_hdr)
-            hdr_avail_sp = currentAttList["av_HDRes"] * int(self.service_hdr)        
+            hdr_avail_sp = currentAttList["av_HDRes"] * int(self.service_hdr)
             Aimphdr = currentAttList["HDR_EIA"]
 
             hasLI = int(currentAttList["Has_LI"]) * int(self.service_li)
@@ -2291,7 +2291,7 @@ class UB_Techplan(Module):
                                     tdHDR.append(sys_object)
 
                   #LI Systems
-                  hasLIsystems = int(currentAttList["HasL_LISys"])  
+                  hasLIsystems = int(currentAttList["HasL_LISys"])
                   if hasLIsystems == 0 and hasLI != 0 and AimpLI > 0.0001 and j not in ["banned","list","of","tech"]:
                         for i in self.lot_incr:
                               if i == 0:
@@ -2300,7 +2300,7 @@ class UB_Techplan(Module):
                               for sys_object in sys_objects:
                                     tdLI.append(sys_object)
 
-                  #HI Systems                        
+                  #HI Systems
                   hasHIsystems = int(currentAttList["HasL_HISys"])
                   if hasHIsystems == 0 and hasHI != 0 and AimpHI > 0.0001 and j not in ["banned","list","of","tech"]:
                         for i in self.lot_incr:
@@ -2320,12 +2320,12 @@ class UB_Techplan(Module):
                               for sys_object in sys_objects:
                                     tdCOM.append(sys_object)
 
-            return tdRES, tdHDR, tdLI, tdHI, tdCOM    
+            return tdRES, tdHDR, tdLI, tdHI, tdCOM
 
       def designTechnology(self, incr, Aimp, techabbr, dcvpath, tech_applications, soilK, minsize, maxsize, avail_sp, landuse, currentID, storeObj):
             """Carries out the design for a given system type on a given land use and scale. This function is
             used for the different land uses that can accommodate various technologies in the model.
-            Input Arguments:            
+            Input Arguments:
             -incr = design increment                             -minsize = minimum system size
             -Aimp = effective imp. area                          -maxsize = maximum system size
             -techabbr = technology's abbreviation                -avail_sp = available space
@@ -2334,7 +2334,7 @@ class UB_Techplan(Module):
             -soilK = soil exfiltration rates                     -storeObj = object containing storage info in case of recycling objective
             Output Argument:
             - a WSUD object instance
-            """            
+            """
             scalematrix = {"RES":'L', "HDR":'L', "LI":'L', "HI":'L', "COM":'L', "Street":'S', "Neigh":'N', "Subbas":'B'}
 
             try:
@@ -2366,7 +2366,7 @@ class UB_Techplan(Module):
                   #print Asystem["Qty"]
             else:
                   Asystem["Qty"] = [None, 1]
-            
+
             Asystem["Size"] = Asystem["Qty"]    #First target, set as default system size, even if zero
 
             #OBJECTIVE 2 - Design for WQ Control
@@ -2412,13 +2412,13 @@ class UB_Techplan(Module):
                         #Required surface are of a system that only does water quality management...
 
                   vol = storeObj.getSize()
-                  #print vol
+                  #print "Volume", vol
                   if vol == np.inf:       #Strange error where volume return is inf, yet the name 'inf' is not defined
                         vol = np.inf
 
                   design_harvest = True
                   if AsystemRecWQ[0] in [np.inf, None] or vol == np.inf:
-                        #Skip harvesting design! Cannot fulfill treatment + storage
+                        #print "Skip harvesting design! Cannot fulfill treatment + storage"
                         design_harvest = False
 
                   #Harvesting System Design: Part 1 - INTEGRATED Design extra storage space as integrated storage
@@ -2429,6 +2429,7 @@ class UB_Techplan(Module):
                   if techabbr in ["RT", "GW", "PB", "WSUR"] and design_harvest:        #Turn the WQ system into a SWH system based on hybrid combos
                         sysdepth = float(self.sysdepths[techabbr])     #obtain the system depth
                         AsystemRecQty = eval('td.sizeStoreArea_'+str(techabbr)+'('+str(vol)+','+str(sysdepth)+','+str(0)+','+str(9999)+')')
+                        #print "AsysrecQty[RT, GW, PB. WSUR]", AsystemRecQty
                         if AsystemRecQty[0] != None:
                               addstore.append([storeObj, AsystemRecWQ, AsystemRecQty, techabbr, 1])     #Input arguments to addstore function
 
@@ -2439,6 +2440,7 @@ class UB_Techplan(Module):
                   if techabbr in ["WSUR", "BF", "SW"] and design_harvest:
                         sysdepth = float(self.sysdepths["RT"])
                         AsystemRecQty = td.sizeStoreArea_RT(vol, sysdepth, 0, 9999)
+                        #print "AsysrecQty[WSUR, BF, SW]", AsystemRecQty
                         if AsystemRecQty[0] != None:
                               addstore.append([storeObj, AsystemRecWQ, AsystemRecQty, "RT", 0])
 
@@ -2448,6 +2450,7 @@ class UB_Techplan(Module):
                   if techabbr in ["BF", "SW"] and curscale in ["N", "B"] and design_harvest:
                         sysdepth = float(self.sysdepths["PB"])
                         AsystemRecQty = td.sizeStoreArea_PB(vol, sysdepth, 0.0, 9999.0)
+                        #print "AsysrecQty[BF, SW]", AsystemRecQty
                         if AsystemRecQty[0] != None:
                               addstore.append([storeObj, AsystemRecWQ, AsystemRecQty, "PB", 0])
 
@@ -2459,7 +2462,7 @@ class UB_Techplan(Module):
                   if len(curstore) == 0:
                         #print "No Addstore Data, continuing"
                         continue
-            
+
                   #CHECK WHAT THE TOTAL SYSTEM SIZE IS FIRST BY COMPARING LARGEST SYSTEM TO DATE VS. HARVESTING SYSTEM
                   recsize = curstore[1][0] + curstore[2][0]   #AsystemRecWQ + AsystemRecQTY
                   eafact = recsize/(curstore[1][0]/curstore[1][1] + curstore[2][0]/curstore[2][1])    #area factor, does not indicate relative factors for different systems!
@@ -2470,6 +2473,8 @@ class UB_Techplan(Module):
                         Asystem["Size"] = Asystem["Rec"]    #Because the integrated system has same planning rules so EAFACT is the same
                   else:
                         Asystem["Size"] = curstore[1]   #if non-integrated, then base system is defined ONLY as WQ area/treatment...
+
+                  #print "Asystem", Asystem
 
                   #NOW CHECK AVAILABLE SPACE - CREATE OBJECT AND PASS TO FUNCTION RETURN
                   if recsize < avail_sp and recsize != None:        #if it fits and is NOT a NoneType
@@ -2549,7 +2554,7 @@ class UB_Techplan(Module):
 
                               if hasHouses != 0 and AimptotreatRes > 0.0001:
                                     sys_objects = self.designTechnology(street_deg, AimptotreatRes, j, dcvpath,
-                                          tech_applications, soilK, minsize, maxsize, 
+                                          tech_applications, soilK, minsize, maxsize,
                                           street_avail_Res, "Street", currentID, storeObj)
                                     for sys_object in sys_objects:
                                           sys_object.setDesignIncrement([lot_deg, street_deg])
@@ -2558,8 +2563,8 @@ class UB_Techplan(Module):
 
 
       def assessNeighbourhoodOpportunities(self, techList, currentAttList):
-            """Assesses if the shortlist of neighbourhood-scale technologies can be put in local parks 
-            & other areas. Does this for one block at a time, depending on the currentAttributesList 
+            """Assesses if the shortlist of neighbourhood-scale technologies can be put in local parks
+            & other areas. Does this for one block at a time, depending on the currentAttributesList
             and the techlist
             """
             currentID = int(currentAttList["BlockID"])
@@ -2598,7 +2603,7 @@ class UB_Techplan(Module):
                   dcvpath = self.getDCVPath(j)
                   for neigh_deg in self.neigh_incr:
                         #print "Current Neigh Deg: "+str(neigh_deg)
-                        if neigh_deg == 0: 
+                        if neigh_deg == 0:
                               continue
 
                         Aimptotreat = neigh_deg * AblockEIA
@@ -2606,7 +2611,7 @@ class UB_Techplan(Module):
                         if bool(int(self.ration_harvest)) and neighSWstores != np.inf:
                               curStoreObjs = neighSWstores[neigh_deg]
                               for supplyincr in self.neigh_incr:
-                                    if supplyincr == 0: 
+                                    if supplyincr == 0:
                                           continue
                                     storeObj = curStoreObjs[supplyincr]
                                     sys_objects = self.designTechnology(neigh_deg, Aimptotreat, j, dcvpath, tech_applications,
@@ -2626,14 +2631,14 @@ class UB_Techplan(Module):
 
 
       def assessSubbasinOpportunities(self, techList, currentAttList):
-            """Assesses if the shortlist of sub-basin-scale technologies can be put in local parks 
-            & other areas. Does this for one block at a time, depending on the currentAttributesList 
+            """Assesses if the shortlist of sub-basin-scale technologies can be put in local parks
+            & other areas. Does this for one block at a time, depending on the currentAttributesList
             and the techlist
             """
             currentID = int(currentAttList["BlockID"])
 
             technologydesigns = {}  #Three Conditions: 1) there must be upstream blocks
-                                                     # 2) there must be space available, 
+                                                     # 2) there must be space available,
                                                      # 3) there must be impervious to treat
 
             soilK = currentAttList["Soil_k"]
@@ -2680,7 +2685,7 @@ class UB_Techplan(Module):
                   #Design curve path
                   dcvpath = self.getDCVPath(j)
                   for bas_deg in self.subbas_incr:
-                        #print Current Basin Deg: "+str(bas_deg)
+                        #print "Current Basin Deg: "+str(bas_deg)
                         if bas_deg == 0:
                               continue
                         Aimptotreat = upstreamImp * bas_deg
@@ -2690,14 +2695,15 @@ class UB_Techplan(Module):
                         if bool(int(self.ration_harvest)) and subbasSWstores != np.inf:
                               curStoreObjs = subbasSWstores[bas_deg]  #current dict of possible stores based on harvestable area (bas_Deg)
                               for supplyincr in self.subbas_incr:
-                                    if supplyincr == 0 or Aimptotreat < 0.0001: 
+                                    if supplyincr == 0 or Aimptotreat < 0.0001:
                                           continue
                                     storeObj = curStoreObjs[supplyincr]
                                     sys_objects = self.designTechnology(bas_deg, Aimptotreat, j, dcvpath, tech_applications,
                                                       soilK, minsize, maxsize, totalavailable, "Subbas", currentID, storeObj)
-                              for sys_object in sys_objects:
-                                    sys_object.setDesignIncrement(bas_deg)
-                                    technologydesigns[bas_deg].append(sys_object)
+                                    
+                                    for sys_object in sys_objects:
+                                          sys_object.setDesignIncrement(bas_deg)
+                                          technologydesigns[bas_deg].append(sys_object)
                         else:
                               storeObj = np.inf
                               sys_objects = self.designTechnology(bas_deg, Aimptotreat, j, dcvpath, tech_applications,
@@ -2709,7 +2715,7 @@ class UB_Techplan(Module):
 
 
       def retrieveStreamBlockIDs(self, currentAttList, direction):
-            """Returns a vector containing all upstream block IDs, allows quick collation of 
+            """Returns a vector containing all upstream block IDs, allows quick collation of
             details.
             """
             blockID = int(currentAttList["BlockID"])
@@ -2717,14 +2723,14 @@ class UB_Techplan(Module):
             curID = blockID
             if direction == "upstream":
                   #Read downIDlist, grab BlockID, continue
-                  
+
                   #First group of IDs
                   indices = [id_index for id_index, x in enumerate(self.downIDlist) if x == curID]
                   for id_index in indices:
                         if id_index == -1:
                               continue
                         streamIDs.append(self.blockIDlist[id_index])
-            
+
                   #Begin scanning the next IDs
                   curindex = 0
                   while curindex != len(streamIDs):
@@ -2735,7 +2741,7 @@ class UB_Techplan(Module):
 
             elif direction == "downstream":
                   while curID != -1:
-                        try: 
+                        try:
                               downID = self.downIDlist[self.blockIDlist.index(curID)]
                               if downID == -1:
                                     curID = -1
@@ -2920,7 +2926,7 @@ class UB_Techplan(Module):
       def determineEndUses(self, wqtype):
             """Returns an array of the allowable water end uses for the given water
             quality type 'wqtype'. Array is dependent on user inputs and is subsequently
-            used to determine water demands substitutable by that water source. This 
+            used to determine water demands substitutable by that water source. This
             function is only for neighbourhood and sub-basin scales"""
             wqlevel = self.ffplevels[wqtype]
             enduses = []
@@ -2964,7 +2970,7 @@ class UB_Techplan(Module):
             #print "Total Demand Substitutable: "+str(totalsubdemand)
 
             if totalsubdemand == 0: #If nothing can be substituted, return infinity
-                  return np.inf    
+                  return np.inf
 
             #Loop across increments: Storage that harvests all area/WW to supply [0.25, 0.5, 0.75, 1.0] of demand
             for i in range(len(self.neigh_incr)):   #Loop across harvestable area
@@ -2980,7 +2986,7 @@ class UB_Techplan(Module):
                         supplyincr = self.neigh_incr[j]
                         recdemand = supplyincr*blk_demands  #x% of total block demand
                         if recdemand > totalsubdemand:      #if that demand is greater than what can be substituted, then
-                              storageVol[harvestincr][supplyincr] = np.inf         
+                              storageVol[harvestincr][supplyincr] = np.inf
                               #make it impossible to size a system for that combo
                               continue
                         #print "Recycled Demand: "+str(recdemand)
@@ -3011,7 +3017,7 @@ class UB_Techplan(Module):
                               maxinflow = 0
 
                         if (self.rec_demrange_max/100.0)*maxinflow < recdemand or (self.rec_demrange_min/100.0)*maxinflow > recdemand:
-                              storageVol[harvestincr][supplyincr] = np.inf 
+                              storageVol[harvestincr][supplyincr] = np.inf
                               #Cannot size a store that is not within the demand range specified
                               continue
 
@@ -3030,7 +3036,7 @@ class UB_Techplan(Module):
 
       def getTotalWaterDemandEndUse(self, currentAttList, enduse):
             """Retrieves all end uses for the current Block based on the end use matrix
-            and the lot-increment. 
+            and the lot-increment.
             """
             demand = 0
             #End use in houses and apartments - indoors + garden irrigation
@@ -3087,7 +3093,7 @@ class UB_Techplan(Module):
             elif self.hs_strategy == "ua":
                   supplytoblockIDs = self.retrieveStreamBlockIDs(currentAttList, "downstream")
                   for i in range(len(harvestblockIDs)):   #To get all basin IDs, simply concatenate the strings
-                        supplytoblockIDs.append(harvestblockIDs[i])   
+                        supplytoblockIDs.append(harvestblockIDs[i])
 
             #print "HarvestBlocKIDs: "+str(harvestblockIDs)
             #print "SupplyBlockIDs:" +str(supplytoblockIDs)
@@ -3126,7 +3132,7 @@ class UB_Techplan(Module):
                         supplyincr = self.subbas_incr[j]
                         recdemand = bas_totdemand * supplyincr
                         if recdemand > bas_subdemand:      #if that demand is greater than what can be substituted, then
-                              storageVol[harvestincr][supplyincr] = np.inf         
+                              storageVol[harvestincr][supplyincr] = np.inf
                               #make it impossible to size a system for that combo
                               continue
 
@@ -3166,7 +3172,7 @@ class UB_Techplan(Module):
       ###################################
       #--- IN-BLOCK OPTIONS CREATION ---#
       ###################################
-      def constructInBlockOptions(self, currentAttList, lot_techRES, lot_techHDR, lot_techLI, 
+      def constructInBlockOptions(self, currentAttList, lot_techRES, lot_techHDR, lot_techLI,
                                     lot_techHI, lot_techCOM, street_tech, neigh_tech):
             """Tries every combination of technology and narrows down the list of in-block
             options based on MCA scoring and the Top Ranking Configuration selected by the
@@ -3196,7 +3202,7 @@ class UB_Techplan(Module):
             Aimplot = currentAttList["ResLotEIA"]
             AimpRes = allotments * Aimplot
             AimpstRes = currentAttList["ResFrontT"] - currentAttList["avSt_RES"]
-            Aimphdr = currentAttList["HDR_EIA"]    
+            Aimphdr = currentAttList["HDR_EIA"]
             AimpAeLI = currentAttList["LIAeEIA"]
             AimpLI = AimpAeLI * estatesLI
             AimpAeHI = currentAttList["HIAeEIA"]
@@ -3260,7 +3266,7 @@ class UB_Techplan(Module):
                                     continue    #Overtreatment occurring in residential district at the lot scale for "Qty"
                               if a[1] != 0 and b != 0 and (a[1].getService("WQ")*allotments + b.getService("WQ")) > (AimpRes+AimpstRes):
                                     continue    #Overtreatment occurring in residential district at the lot scale for "WQ"
-                              if combo.count(0) == 7: 
+                              if combo.count(0) == 7:
                                     continue    #all options in the combo are zero, then we have no technologies, skip this as well
 
                               servicematrix = self.getTotalComboService(combo, lotcounts)
@@ -3281,12 +3287,12 @@ class UB_Techplan(Module):
                                     blockstrat.setIAO("Qty", offsetmatrix[0])
                                     blockstrat.setIAO("WQ", offsetmatrix[1])
                                     #print blockstrat
-                                    tt.CalculateMCATechScores(blockstrat,[AblockEIA, AblockEIA, blockDem],self.curscalepref, self.priorities, 
+                                    tt.CalculateMCATechScores(blockstrat,[AblockEIA, AblockEIA, blockDem],self.curscalepref, self.priorities,
                                           self.mca_techlist, self.mca_tech, self.mca_env, self.mca_ecn, self.mca_soc, self.iao_influence/100.0)
 
-                                    tt.CalculateMCAStratScore(blockstrat, [self.bottomlines_tech_w, self.bottomlines_env_w, 
+                                    tt.CalculateMCAStratScore(blockstrat, [self.bottomlines_tech_w, self.bottomlines_env_w,
                                           self.bottomlines_ecn_w, self.bottomlines_soc_w])
-                                    
+
                               if len(allInBlockOptions[servicebin]) < 10:         #If there are less than ten options in each bin...
                                     allInBlockOptions[servicebin].append(blockstrat)        #append the current strategy to the list of that bin
                               else:               #Otherwise get bin's lowest score, compare and replace if necessary
@@ -3466,13 +3472,13 @@ class UB_Techplan(Module):
       def calculateRemainingService(self, servtype, basinBlockIDs):
             """Assesses the alread treated area/demand for the current basin and returns
             the remaining area/demand to be treated with a strategy.
-            - Type: refers to the type of objective "QTY" = quantity, WQ = quality, 
+            - Type: refers to the type of objective "QTY" = quantity, WQ = quality,
             REC = recycling
             - basinBlockIDs: array containing all IDs within the current basin
             """
             #print basinBlockIDs
-            # print "Basin Blocks", basinBlockIDs
-            # print servtype
+            #print "Basin Blocks", basinBlockIDs
+            #print servtype
             if servtype in ["WQ", "QTY"]:       #for basin EIA
                   total = self.retrieveAttributeFromIDs(basinBlockIDs, "Manage_EIA", "sum")
             elif servtype in ["REC"]:           #for basin total Demand minus indoor non-res demand
@@ -3509,14 +3515,18 @@ class UB_Techplan(Module):
             return delta_percent, basinRemain, basinTreated, total
 
 
-      def populateBasinWithTech(self, current_bstrategy, subbas_chosenIDs, inblocks_chosenIDs, 
+      def populateBasinWithTech(self, current_bstrategy, subbas_chosenIDs, inblocks_chosenIDs,
                               inblock_options, subbas_options, basinBlockIDs):
             """Scans through all blocks within a basin from upstream to downstream end and populates the
-            various areas selected in chosenIDs arrays with possible technologies available from the 
+            various areas selected in chosenIDs arrays with possible technologies available from the
             options arrays. Returns an updated current_bstrategy object completed with all details.
             """
             partakeIDs = current_bstrategy.getSubbasPartakeIDs()    #returned in order upstream-->downstream
             basintotals = current_bstrategy.getBasinTotalValues()
+
+            # print "PartakeIDs", partakeIDs
+            # print "BasinTotals", basintotals
+            # print "BasinBlockIDs", basinBlockIDs
 
             if len(partakeIDs) == 0:
                   subbas_treatedAimpQTY = 0  #Sum of already treated imp area in upstream sub-basins and the now planned treatment
@@ -3605,14 +3615,13 @@ class UB_Techplan(Module):
                         if b_id in upstreamIDs:
                               subbasinIDs.append(b_id)
                   #print "Subbasins upstream of current location "+str(subbasinIDs)
-                  
+
                   for sbID in subbasinIDs:                  #then loop over the locations found and
                         partakeIDsTracker.remove(sbID)      #remove these from the tracker list so
                                                             #that they are not doubled up
-                  
+
                   for b_id in subbasinIDs:
                         remainIDs.remove(b_id)            #remove the sub-basin ID's ID from remainIDs
-                        #upstrIDs = self.retrieveStreamBlockIDs(self.getBlockUUID(id, city), "upstream")
                         upstrIDs = self.retrieveStreamBlockIDs(self.blockDict[b_id], "upstream")
                         for upID in upstrIDs:   #Also remove all sub-basinID's upstream block IDs from
                               remainIDs.remove(upID)   #remain IDs, leaving ONLY Blocks local to currentBlockID
@@ -3644,8 +3653,8 @@ class UB_Techplan(Module):
                   subbas_treatedDemREC = 0
 
                   for sbID in subbasinIDs:
-                        subbas_treatedAimpQTY += subbasID_treatedQTY[sbID]  #Check all upstream sub-basins for their treated Aimp            
-                        subbas_treatedAimpWQ += subbasID_treatedWQ[sbID]    #Check all upstream sub-basins for their treated Aimp            
+                        subbas_treatedAimpQTY += subbasID_treatedQTY[sbID]  #Check all upstream sub-basins for their treated Aimp
+                        subbas_treatedAimpWQ += subbasID_treatedWQ[sbID]    #Check all upstream sub-basins for their treated Aimp
 
                   #print subbas_treatedAimpQTY
                   #print subbas_treatedAimpWQ
@@ -3653,11 +3662,11 @@ class UB_Techplan(Module):
                   remainAimp_subbasinQTY = max(totalAimpQTY - subbas_treatedAimpQTY, 0)
                   if bool(int(self.ration_runoff)) and totalAimpQTY != 0:
                         max_deg_matrix.append(remainAimp_subbasinQTY / totalAimpQTY)
-                  
+
                   remainAimp_subbasinWQ = max(totalAimpWQ - subbas_treatedAimpWQ, 0)
                   if bool(int(self.ration_pollute)) and totalAimpWQ != 0:
                         max_deg_matrix.append(remainAimp_subbasinWQ / totalAimpWQ)
-                  
+
                   if self.hs_strategy == 'ud':
                         totSupply = 0
                         downstreamIDs = []      #the complete matrix of all downstream IDs from all upstream sbIDs
@@ -3684,14 +3693,13 @@ class UB_Techplan(Module):
 
                   if bool(int(self.ration_harvest)) and totalDemREC != 0:
                         max_deg_matrix.append(remainDem_subbasinRec / totalDemREC)
-                  
-                  # print "Max_deg_matrix", max_deg_matrix
-                  # print "Max Degre matrix: "+str(max_deg_matrix)
+
+                  #print "Max_deg_matrix", max_deg_matrix
+                  #print "Max Degre matrix: "+str(max_deg_matrix)
                   if len(max_deg_matrix) == 0:
                       continue
 
                   max_degree = min(max_deg_matrix)+float(self.service_redundancy/100.0)  #choose the minimum, bring in allowance using redundancy parameter
-
                   current_bstrategy.addSubBasinInfo(currentBlockID, upstreamIDs, subbasinIDs, [totalAimpQTY,totalAimpWQ,totalDemREC])
                   #print [totalAimpQTY,totalAimpWQ,totalDemREC]
                   #print "Current State of Treatment: "+str([subbas_treatedAimpQTY, subbas_treatedAimpWQ, subbas_treatedDemREC])
@@ -3786,7 +3794,7 @@ class UB_Techplan(Module):
                   serviceProvided[i] *= float(serviceBooleans[i])     #Rescale to ensure no service items are zero
             #print "Service Req "+str(serviceProvided)
             #print "Service Provided "+str(serviceRequired)
-            
+
             #Objective Criterion: A strategy is most suitable to the user's input
             #requirements if the sum(service-provided - service-required) is a minimum
             #and >0
@@ -3802,7 +3810,7 @@ class UB_Techplan(Module):
 
       def pickOption(self, blockID, max_degree, options_collection, totals, strattype):
             """Picks and returns a random option based on the input impervious area and maximum
-            treatment degree. Can be used on either the in-block strategies or larger precinct 
+            treatment degree. Can be used on either the in-block strategies or larger precinct
             strategies. If it cannot pick anything, it will return zeros all around."""
             bracketwidth = 1.0/float(self.subbas_rigour)    #Use bracket to determine optimum bin
 
@@ -3812,7 +3820,7 @@ class UB_Techplan(Module):
 
                   #Continuous-based picking
                   for i in options_collection["BlockID"+str(blockID)].keys():
-                        if (i-bracketwidth/2) >= max_degree:                
+                        if (i-bracketwidth/2) >= max_degree:
                               continue
                         for j in options_collection["BlockID"+str(blockID)][i]:
                               options.append(j)
@@ -3820,7 +3828,7 @@ class UB_Techplan(Module):
                   #Bin-based picking
                   #            degs = []   #holds all the possible increments within max_degree
                   #            for i in options_collection["BlockID"+str(blockID)].keys():
-                  #                if (i-bracketwidth/2) <= max_degree:                
+                  #                if (i-bracketwidth/2) <= max_degree:
                   #                    degs.append(i)  #add as a possible increment
                   #            if len(degs) != 0:
                   #                chosen_deg = degs[random.randint(0, len(degs)-1)]
@@ -3828,6 +3836,7 @@ class UB_Techplan(Module):
                   #                    options.append(j)
 
                   if len(options) == 0:
+                        #print "No Options available"
                         return 0, 0, 0, 0, 0, 0, 0
                   scores = []
                   for i in options:
@@ -3847,7 +3856,7 @@ class UB_Techplan(Module):
                   #            DemREC = totals[2]
                   #            treatedAimpQTY = chosen_deg * AimpQTY
                   #            treatedAimpWQ = chosen_deg * AimpWQ
-                  #            treatedDemREC = chosen_deg * DemREC            
+                  #            treatedDemREC = chosen_deg * DemREC
                   treatedAimpQTY = chosen_obj.getService("Qty")
                   iaoqty = chosen_obj.getIAO("Qty")
                   treatedAimpWQ = chosen_obj.getService("WQ")
@@ -3880,9 +3889,9 @@ class UB_Techplan(Module):
                   #                chosen_deg = self.subbas_incr[choice]
                   #            else:
                   #                return 0, 0, 0, 0, 0
-                  #            
+                  #
                   #            Nopt = len(options_collection["BlockID"+str(blockID)][chosen_deg])
-                  #            
+                  #
                   #            if Nopt != 0:
                   #            #if chosen_deg != 0 and Nopt != 0:
                   ##                treatedAimpQTY = chosen_deg * AimpQTY
@@ -3890,7 +3899,7 @@ class UB_Techplan(Module):
                   ##                treatedDemREC = chosen_deg * DemREC
                   #                choice = random.randint(0, Nopt-1)
                   #                chosen_obj = options_collection["BlockID"+str(blockID)][chosen_deg][choice]
-                  #                
+                  #
                   if chosen_obj == 0:
                         return 0, 0, 0, 0, 0, 0, 0
                   chosen_deg = chosen_obj.getDesignIncrement()
@@ -3902,6 +3911,7 @@ class UB_Techplan(Module):
 
                   return chosen_deg, chosen_obj, treatedAimpQTY, treatedAimpWQ, treatedDemREC, iaoqty, iaowq
             else:
+                  print "No Options available"
                   return 0, 0, 0, 0, 0, 0, 0
 
       def createCDF(self, score_matrix):
@@ -3940,7 +3950,7 @@ class UB_Techplan(Module):
             print "Transferring outputs"
             print self.wsudDebug
             f = open(self.debugfilepath+"Debug.csv", 'w')
-            
+
             attnames = self.wsudDebug[0].keys()
             headerline = ""
             for i in range(len(attnames)):
@@ -3975,7 +3985,7 @@ class UB_Techplan(Module):
       #       for i in range(len(basinBlockIDs)):
       #             currentID = basinBlockIDs[i]
       #             currentAttList = self.blockDict[currentID]
-                  
+
       #             #Grab the strategy objects
       #             inblock_strat = strat_object.getIndividualTechStrat(currentID, "b")
 
@@ -3999,7 +4009,7 @@ class UB_Techplan(Module):
       #                         continue
       #                   current_wsud = inblock_systems[j]
       #                   scale = blockscale_names[j]
-                        
+
       #                   goalqty = inblock_lotcount[j]
 
       #                   datastring = ""
@@ -4042,7 +4052,7 @@ class UB_Techplan(Module):
       #             outblock_strat = strat_object.getIndividualTechStrat(currentID, "s")
       #             if outblock_strat != None:
       #                   scale = "B"
-                        
+
       #                   datastring = ""
       #                   datastring += str(id)+","           #StrategyID
       #                   datastring += str(strat_score)+","  #MCAScore
@@ -4086,7 +4096,7 @@ class UB_Techplan(Module):
 
 
       def writeStrategyView(self, id, basinID, basinBlockIDs, strategydata):
-            """Writes the output view of the selected WSUD strategy and saves it to the 
+            """Writes the output view of the selected WSUD strategy and saves it to the
             self.wsudAttr View.
             """
             strat_object = strategydata[0]
@@ -4302,7 +4312,7 @@ class UB_Techplan(Module):
       def transferExistingSystemsToOutput(self, stratID, score, basinID):
             """Writes all existing systems to the new output view under a new strategyID as they
             will accompany all newly planned systems under a future alternative"""
-            
+
             #>>>>>>>>>>>> GET EXISTING SYSTEMS
             #existSys = self.activesim.getAssetsWithIdentifier("SysPrevID")
             #>>>>>>>>>>>>> GET EXISTING SYSTEMS
@@ -4313,7 +4323,7 @@ class UB_Techplan(Module):
                         continue        #RemoveComponent only removes the components, not the UUID, must therefore catch this
                   if int(curSys.getAttribute("BasinID")) != int(basinID):
                         continue        #If the system is not in the current basin, don't transfer it yet.
-                  
+
                   #DEBUG
                   stratDict = {}
                   stratDict["StrategyID"] = stratID
@@ -4373,4 +4383,3 @@ class UB_Techplan(Module):
                   loc.SetField("FDepth", curSys["FDepth"])
                   loc.SetField("Exfil", curSys["Exfil"])
             return True
-
