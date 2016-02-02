@@ -576,33 +576,6 @@ class UB_Techplan(Module):
             self.debugfilepath = "C:/Users/Peter Bach/Dropbox/Documents RESEARCH/Current Projects/CRC Water Sensitive Cities/A4.3 DAnCE4Water/DAnCE x UrbanBEATS Module/Verification/"
             self.wsudDebug = []
 
-
-            # self.attnames = ["BlockID", "BasinID", "Status", "Active", "Nhd_N", "Nhd_S",
-            #         "Nhd_W", "Nhd_E", "Nhd_NE", "Nhd_NW", "Nhd_SE", "Nhd_SW", "Soil_k",
-            #         "AvgElev", "pLU_RES", "pLU_COM", "pLU_LI", "pLU_CIV", "pLU_SVU",
-            #         "pLU_RD", "pLU_TR", "pLU_PG", "pLU_REF", "pLU_UND", "pLU_NA", "Pop",
-            #         "downID", "Outlet", "MiscAtot", "OpenSpace", "AGardens", "ASquare",
-            #         "PG_av", "REF_av", "ANonW_Util", "SVU_avWS", "SVU_avWW", "SVU_avSW",
-            #         "SVU_avOTH", "RoadTIA", "RD_av", "RDMedW", "DemPublicI", "HouseOccup", "ResFrontT",
-            #         "avSt_RES", "WResNstrip", "ResAllots", "ResDWpLot", "ResHouses", "ResLotArea",
-            #         "ResRoof", "avLt_RES", "ResLotTIA", "ResLotEIA", "ResGarden", "DemPrivI",
-            #         "ResRoofCon", "HDRFlats", "HDRRoofA", "HDROccup", "HDR_TIA", "HDR_EIA",
-            #         "HDRFloors", "av_HDRes", "HDRGarden", "HDRCarPark", "DemAptI",
-            #         "LIjobs", "LIestates", "avSt_LI", "LIAfront", "LIAfrEIA", "LIAestate", "LIAeBldg",
-            #         "LIFloors", "LIAeLoad", "LIAeCPark", "avLt_LI", "LIAeLgrey", "LIAeEIA", "LIAeTIA",
-            #         "HIjobs", "HIestates", "avSt_HI", "HIAfront", "HIAfrEIA", "HIAestate", "HIAeBldg",
-            #         "HIFloors", "HIAeLoad", "HIAeCPark", "avLt_HI", "HIAeLgrey", "HIAeEIA", "HIAeTIA",
-            #         "ORCjobs", "ORCestates", "avSt_ORC", "ORCAfront", "ORCAfrEIA", "ORCAestate", "ORCAeBldg",
-            #         "ORCFloors", "ORCAeLoad", "ORCAeCPark", "avLt_ORC", "ORCAeLgrey", "ORCAeEIA", "ORCAeTIA",
-            #         "COMjobs", "COMestates", "avSt_COM", "COMAfront", "COMAfrEIA",
-            #         "COMAestate", "COMAeBldg", "COMFloors", "COMAeLoad", "COMAeCPark", "avLt_COM",
-            #         "COMAeLgrey", "COMAeEIA", "COMAeTIA", "Blk_TIA", "Blk_EIA", "Blk_EIF",
-            #         "Blk_TIF", "Blk_RoofsA", "wd_PrivIN", "wd_PrivOUT", "wd_Nres_IN", "Apub_irr",
-            #         "wd_PubOUT", "Blk_WD", "Blk_Kitch", "Blk_Shower", "Blk_Toilet", "Blk_Laund",
-            #         "Blk_Garden", "Blk_Com", "Blk_Ind", "Blk_PubIrr", "HasHouses", "HasFlats",
-            #         "Has_LI", "Has_Com", "Has_HI", "Has_ORC", "HasL_RESSys", "HasL_HDRSys", "HasL_LISys",
-            #         "HasL_HISys", "HasL_COMSys", "HasSSys", "HasNSys", "HasBSys"]
-
             self.attnames = ["av_HDRes","avLt_COM","avLt_HI","avLt_LI","avLt_RES",
                             "avSt_RES","BasinID","Blk_EIA","Blk_WD","BlockID",
                             "COMAeEIA","COMestates","downID","HDRFlats", "HDR_EIA",
@@ -634,142 +607,40 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("BlockID", DOUBLE, READ)
             self.blockdata.addAttribute("BasinID", DOUBLE, READ)
             self.blockdata.addAttribute("Status", DOUBLE, READ)
-            # self.blockdata.addAttribute("Active", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_N", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_S", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_W", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_E", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_NE", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_NW", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_SE", DOUBLE, READ)
-            # self.blockdata.addAttribute("Nhd_SW", DOUBLE, READ)
             self.blockdata.addAttribute("Soil_k", DOUBLE, READ)
-            # self.blockdata.addAttribute("AvgElev", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_RES", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_COM", DOUBLE, READ)   #commercial & offices
-            # self.blockdata.addAttribute("pLU_LI", DOUBLE, READ)    #light & heavy industry
-            # self.blockdata.addAttribute("pLU_CIV", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_SVU", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_RD", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_TR", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_PG", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_REF", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_UND", DOUBLE, READ)
-            # self.blockdata.addAttribute("pLU_NA", DOUBLE, READ)
-            # self.blockdata.addAttribute("Pop", DOUBLE, READ)
             self.blockdata.addAttribute("downID", DOUBLE, READ)
             self.blockdata.addAttribute("Outlet", DOUBLE, READ)
-            # self.blockdata.addAttribute("MiscAtot", DOUBLE, READ)
-            # self.blockdata.addAttribute("OpenSpace", DOUBLE, READ)
-            # self.blockdata.addAttribute("AGardens", DOUBLE, READ)
-            # self.blockdata.addAttribute("ASquare", DOUBLE, READ)
             self.blockdata.addAttribute("PG_av", DOUBLE, READ)
             self.blockdata.addAttribute("REF_av", DOUBLE, READ)
-            # self.blockdata.addAttribute("ANonW_Util", DOUBLE, READ)
             self.blockdata.addAttribute("SVU_avWS", DOUBLE, READ)
             self.blockdata.addAttribute("SVU_avWW", DOUBLE, READ)
             self.blockdata.addAttribute("SVU_avSW", DOUBLE, READ)
-            # self.blockdata.addAttribute("SVU_avOTH", DOUBLE, READ)
-            # self.blockdata.addAttribute("RoadTIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("RD_av", DOUBLE, READ)
-            # self.blockdata.addAttribute("RDMedW", DOUBLE, READ)
-            # self.blockdata.addAttribute("DemPublicI", DOUBLE, READ)
             self.blockdata.addAttribute("HasHouses", DOUBLE, READ)
-            # self.blockdata.addAttribute("HouseOccup", DOUBLE, READ)
             self.blockdata.addAttribute("ResFrontT", DOUBLE, READ)
             self.blockdata.addAttribute("avSt_RES", DOUBLE, READ)
-            # self.blockdata.addAttribute("WResNstrip", DOUBLE, READ)
             self.blockdata.addAttribute("ResAllots", DOUBLE, READ)
-            # self.blockdata.addAttribute("ResDWpLot", DOUBLE, READ)
             self.blockdata.addAttribute("ResHouses", DOUBLE, READ)
-            # self.blockdata.addAttribute("ResLotArea", DOUBLE, READ)
-            # self.blockdata.addAttribute("ResRoof", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_RES", DOUBLE, READ)
-            # self.blockdata.addAttribute("ResLotTIA", DOUBLE, READ)
             self.blockdata.addAttribute("ResLotEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("ResGarden", DOUBLE, READ)
-            # self.blockdata.addAttribute("DemPrivI", DOUBLE, READ)
-            # self.blockdata.addAttribute("ResRoofCon", DOUBLE, READ)
             self.blockdata.addAttribute("HasFlats", DOUBLE, READ)
             self.blockdata.addAttribute("HDRFlats", DOUBLE, READ)
             self.blockdata.addAttribute("HDRRoofA", DOUBLE, READ)
-            # self.blockdata.addAttribute("HDROccup", DOUBLE, READ)
-            # self.blockdata.addAttribute("HDR_TIA", DOUBLE, READ)
             self.blockdata.addAttribute("HDR_EIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("HDRFloors", DOUBLE, READ)
             self.blockdata.addAttribute("av_HDRes", DOUBLE, READ)
-            # self.blockdata.addAttribute("HDRGarden", DOUBLE, READ)
-            # self.blockdata.addAttribute("HDRCarPark", DOUBLE, READ)
-            # self.blockdata.addAttribute("DemAptI", DOUBLE, READ)
             self.blockdata.addAttribute("Has_LI", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIjobs", DOUBLE, READ)
             self.blockdata.addAttribute("LIestates", DOUBLE, READ)
-            # self.blockdata.addAttribute("avSt_LI", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAfront", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAfrEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAestate", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAeBldg", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIFloors", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAeLoad", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAeCPark", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_LI", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("LIAeEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("LIAeTIA", DOUBLE, READ)
             self.blockdata.addAttribute("Has_HI", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIjobs", DOUBLE, READ)
             self.blockdata.addAttribute("HIestates", DOUBLE, READ)
-            # self.blockdata.addAttribute("avSt_HI", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAfront", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAfrEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAestate", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAeBldg", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIFloors", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAeLoad", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAeCPark", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_HI", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("HIAeEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("HIAeTIA", DOUBLE, READ)
             self.blockdata.addAttribute("Has_Com", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMjobs", DOUBLE, READ)
             self.blockdata.addAttribute("COMestates", DOUBLE, READ)
-            # self.blockdata.addAttribute("avSt_COM", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAfront", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAfrEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAestate", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAeBldg", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMFloors", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAeLoad", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAeCPark", DOUBLE, READ)
             self.blockdata.addAttribute("avLt_COM", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAeLgrey", DOUBLE, READ)
             self.blockdata.addAttribute("COMAeEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("COMAeTIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("Has_ORC", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCjobs", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCestates", DOUBLE, READ)
-            # self.blockdata.addAttribute("avSt_ORC", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAfront", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAfrEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAestate", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAeBldg", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCFloors", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAeLoad", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAeCPark", DOUBLE, READ)
-            # self.blockdata.addAttribute("avLt_ORC", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAeLgrey", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAeEIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("ORCAeTIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_TIA", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_EIA", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_EIF", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_TIF", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_RoofsA", DOUBLE, READ)
-            # self.blockdata.addAttribute("wd_PrivIN", DOUBLE, READ)
-            # self.blockdata.addAttribute("wd_PrivOUT", DOUBLE, READ)
             self.blockdata.addAttribute("wd_Nres_IN", DOUBLE, READ)
-            # self.blockdata.addAttribute("Apub_irr", DOUBLE, READ)
             self.blockdata.addAttribute("wd_PubOUT", DOUBLE, READ)
             self.blockdata.addAttribute("wd_RES_K", DOUBLE, READ)
             self.blockdata.addAttribute("wd_RES_S", DOUBLE, READ)
@@ -782,14 +653,6 @@ class UB_Techplan(Module):
             self.blockdata.addAttribute("wd_HDR_L", DOUBLE, READ)
             self.blockdata.addAttribute("wd_HDR_I", DOUBLE, READ)
             self.blockdata.addAttribute("Blk_WD", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Kitch", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Shower", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Toilet", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Laund", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Garden", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Com", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_Ind", DOUBLE, READ)
-            # self.blockdata.addAttribute("Blk_PubIrr", DOUBLE, READ)
             self.blockdata.addAttribute("HasL_RESSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasL_HDRSys", DOUBLE, READ)
             self.blockdata.addAttribute("HasL_LISys", DOUBLE, READ)
