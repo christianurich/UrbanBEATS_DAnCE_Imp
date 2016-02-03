@@ -167,12 +167,10 @@ class UB_Techplan(Module):
             self.createParameter("rain_length", DOUBLE, "")
             self.createParameter("swh_benefits", BOOL, "")
             self.createParameter("swh_unitrunoff", DOUBLE, "")
-            self.createParameter("swh_unitrunoff_auto", BOOL, "")
             self.sb_method = "Sim"  #Sim = simulation, Eqn = equation
             self.rain_length = 2.0   #number of years.
             self.swh_benefits = 1   #execute function to calculate SWH benefits? (1 by default, but perhaps treat as mutually exclusive)
             self.swh_unitrunoff = 0.545  #Unit runoff rate [kL/sqm impervious]
-            self.swh_unitrunoff_auto = 0
 
             ##########################################################################
             #---RETROFIT CONDITIONS INPUTS
@@ -485,11 +483,9 @@ class UB_Techplan(Module):
 
             #SCORING OF STRATEGIES
             self.createParameter("score_strat", STRING, "")
-            self.createParameter("scope_stoch", BOOL,"")
             self.createParameter("score_method", STRING,"")
             self.createParameter("ingroup_scoring", STRING,"")
             self.createParameter("iao_influence", DOUBLE, "")
-            self.scope_stoch = 0
             self.score_strat = "SNP"        #SNP = service-no-penalty, SLP = service-linear-penalty, SPP = service-nonlinear-penalty
             self.score_method = "WSM"       #MCA scoring method
             self.ingroup_scoring = "Avg"
@@ -553,9 +549,7 @@ class UB_Techplan(Module):
             self.maxSBiterations = 100
 
             self.createParameter("maxMCiterations", DOUBLE, "")
-            self.createParameter("defaultdecision", STRING, "")
             self.maxMCiterations = 1000
-            self.defaultdecision = "H"
 
             #MCA Penalties
             self.createParameter("penaltyQty", BOOL, "")
